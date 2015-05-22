@@ -20,47 +20,29 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.hardware.Sensor;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.hardware.input.InputManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.SyncStateContract;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.text.InputType;
-import android.text.Layout;
-import android.text.TextUtils;
-import android.text.method.KeyListener;
-import android.util.Base64OutputStream;
 import android.util.Log;
-import android.view.InputDevice;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.CookieSyncManager;
 import android.widget.Toast;
 
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -71,45 +53,26 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.PasswordAuthentication;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
 import android.hardware.usb.*;
 
 import org.apache.http.NameValuePair;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
@@ -123,8 +86,6 @@ import javax.net.ssl.X509TrustManager;
 
 public class MainActivity extends FragmentActivity                      {
 
-    //public static final String TAG = "Network Connect";
-    public static final UsbRequest mUsbRequest=null;
     private static final String ACTION_USB_PERMISSION =
             "com.android.example.USB_PERMISSION";
     private static final String ACTION_USB_DEVICE_DETACHED =
@@ -133,19 +94,12 @@ public class MainActivity extends FragmentActivity                      {
     // Reference to the fragment showing events, so we can clear it with a button
     // as necessary.
     private LogFragment mLogFragment;
-    //private DialogFragment mLoginDialog;
-    private UsbDevice mUsbDevise;
-    private  PreferenceManager mPreference;
-    private String mfragment_nom;
-    private Fragment mFragment;
-    private SimpleTextFragment msimpleTextFragment;
+    public ControlFragment msimpleTextFragment;
     private BureauFragment mbureauFragment;
-    /* private = new LoginDialog(); */
-    private File jsonOutputFile;
-    private File jsonFile;
+
+    private static String JSON_CHECKPOINT="json_checkpoint";
 
     private static JSONObject json;
-    private static String CSRFTOKEN;
 
     private static final String TAG = "EDroide";
 
@@ -154,26 +108,17 @@ public class MainActivity extends FragmentActivity                      {
 
     public String apitest1="http://cadorb.fr/dahouet/api/api.php?action=get&var=regate";
 
-
-    public String apidev3="https://dev3.libre-informatique.fr/tck.php/ticket/login?signin[username]=antoine?signin[password]=android2015@";
-
-    public String apidev4="https://dev3.libre-informatique.fr/default.php/login"; //+parametres Marche en POST réponse 200 ok
-
     public String apidev7="https://dev3.libre-informatique.fr/"; //+parametres Marche en POST réponse 200 ok
 
-
-    public String apidev5="https://dev3.libre-informatique.fr/tck.php/ticket/control/action?control[id]=&control[ticket_id]=2222&control[checkpoint_id]=1&control[comment]=";
-
-    public String apidev6="https://dev3.libre-informatique.fr/tck.php/ticket/control/action";
+    public String apidev8="https://dev3.libre-informatique.fr/tck.php/ticket/checkpointAjax";
 
     public String cookie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//View fechview= findViewById(R.id.fetch_action);
 
-       // CookieManager cookieManager = new CookieManager();
+        CookieManager cookieManager = new CookieManager();
         CookieHandler.setDefault(new CookieManager());
 
         View UsbBouton = findViewById(R.id.usb_item);
@@ -181,32 +126,62 @@ public class MainActivity extends FragmentActivity                      {
         this.setContentView(R.layout.mainlayout);
 
 
-        mfragment_nom = getIntent().getStringExtra("fragment");
+       // mfragment_nom = getIntent().getStringExtra("fragment");
         setupFragments();
 
-        showFragment(mbureauFragment);
+        showFragment(mbureauFragment,null);
 
-//initialisation de la boite de dialog login
-        DialogFragment mLoginDialog = new LoginDialog();
-        mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
-
+        if(Read_log(this)==null)
+        {
+            showDialog();
+        }
 
     }
 
 
-    //private class SensorActivity {
+    public JSONObject Read_log(Context context)
+    {
+        FileInputStream fIn = null;
+        InputStreamReader isr = null;
 
-        //private final Sensor mAccelerometer;
-        //public void SensorActivity() {
+        char[] inputBuffer = new char[255];
+        String data = null;
+
+        JSONObject json=null;
+
+        try{
+            fIn = context.openFileInput("settings.txt");
+            isr = new InputStreamReader(fIn);
+            isr.read(inputBuffer);
+            data = new String(inputBuffer);
+            //affiche le contenu de mon fichier dans un popup surgissant
+            Toast.makeText(context, "data: "+data,Toast.LENGTH_SHORT).show();
+            json=new JSONObject(data);
+
+        }
+        catch (Exception e) {
+            Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
+        }
+            /*finally {
+               try {
+                      isr.close();
+                      fIn.close();
+                      } catch (IOException e) {
+                        Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
+                      }
+            } */
+        return json;
+    }
 
 
+    private void showDialog()
+    {
+        //initialisation de la boite de dialog login
+        DialogFragment mLoginDialog = new LoginDialog();
+        mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
+    }
 
-
-            // mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        //}
-    //}
-
-    private void setupFragments() {
+    public void setupFragments() {
         final FragmentManager fm = getSupportFragmentManager();
 
         this.mbureauFragment = (BureauFragment) new BureauFragment();
@@ -214,41 +189,44 @@ public class MainActivity extends FragmentActivity                      {
             this.mbureauFragment = new BureauFragment();
         }
 
-        this.msimpleTextFragment = (SimpleTextFragment) new SimpleTextFragment();
+        this.msimpleTextFragment = (ControlFragment) new ControlFragment();
         if (this.msimpleTextFragment == null) {
-            this.msimpleTextFragment = new SimpleTextFragment();
+            this.msimpleTextFragment = new ControlFragment();
         }
 
 
     }
 
-    private void showFragment(final Fragment newfragment) {
+    public void showFragment(Fragment newfragment, Bundle arg) {
         if (newfragment == null)
             return;
 
-        View currentView= getCurrentFocus();
-
-
-//currentView.destroyDrawingCache();
-//currentView.clearFocus();
         final FragmentManager fm = getSupportFragmentManager();
         final FragmentTransaction ft = fm.beginTransaction();
  // We can also animate the changing of fragment
-//Fragment currentfragment=fm.findFragmentById(R.id.intro_fragment);
-//currentfragment.setUserVisibleHint(false);
 
+
+if(newfragment==msimpleTextFragment) {
+    if (arg != null) {
+        if (arg.getString(JSON_CHECKPOINT) != null) {
+           // Log.i(TAG,"show fragment: "+arg.getString(JSON_CHECKPOINT));
+            newfragment.setArguments(arg);
+        }
+    }
+    else
+    {
+        Toast.makeText(getBaseContext(), "Vous ne pouvez pas réaliser de vérification de tickets: ", Toast.LENGTH_SHORT).show();
+
+        newfragment=mbureauFragment;
+    }
+}
         ft.setCustomAnimations(android.R.anim.slide_in_left,
                 android.R.anim.slide_out_right);
-//ft.hide(fragment);
-// ft.remove(fragment);
-//ft.add(msimpleTextFragment,null);
 
         ft.replace(R.id.intro_fragment, newfragment);
-//this.mbureauFragment;
+
         ft.addToBackStack(null);
-//ft.detach(fragment);
-//Toast.makeText(getBaseContext(), "Changement de fragment commit: ", Toast.LENGTH_SHORT).show();
-//ft.remove(fragment);
+
         ft.commit();
 
     }
@@ -260,14 +238,17 @@ public class MainActivity extends FragmentActivity                      {
 
         FragmentManager manager = getSupportFragmentManager();
         if (manager.getBackStackEntryCount() > 1) {
-            super.onBackPressed();
+            showFragment(mbureauFragment, null);
+            //super.onBackPressed();
         } else {
             super.onBackPressed();
         }
     }
 
     public void Scan_ticket_fragment(View v) {
-        showFragment(this.msimpleTextFragment);
+
+       CheckpointTaskHttps mCheckpointTaskHttps= (CheckpointTaskHttps) new CheckpointTaskHttps().execute(apidev8);
+       //showFragment(this.msimpleTextFragment);
     }
 
 public void Menu (View view)
@@ -287,97 +268,26 @@ public void Menu (View view)
         switch (item.getItemId()) {
             // When the user clicks FETCH, fetch the first 500 characters of
 
-            //http://cadorb.fr/dahouet/api/api.php?action=get&var=regate
-
+            //http://cadorb.fr/dahouet/api/apphp?action=get&var=regate
+            case R.id.newlog:
+                showDialog();
+                return true;
 
             case R.id.bureau:
                 try {
-            showFragment(this.mbureauFragment);
+            showFragment(this.mbureauFragment,null);
                 } catch (Exception e) {
                     Toast.makeText(getBaseContext(), "Erreur show fragment: ", Toast.LENGTH_SHORT).show();
 
                 }
-            case R.id.fetch_action:
-
-                new DownloadTask().execute(apitest1);
-       // try {
-                    //mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-                   // IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-                 //   registerReceiver(mUsbReceiver, filter);
-               //     Toast.makeText(getBaseContext(), "mPermissionIntent: " + mPermissionIntent.toString(), Toast.LENGTH_SHORT).show();
-             //   } catch (Exception e) {
-                   // e.printStackTrace();
-                  //  Toast.makeText(getBaseContext(), "erreur Pending intent: " + e, Toast.LENGTH_SHORT).show();
-                //}
-                //InputDevice mInputDevice;
-                //try {
-                 //   InputManager mInputManager = (InputManager) getSystemService(this.INPUT_SERVICE);
-                    //HashMap <String ,InputDevice> InpMap;
-
-                  //  mInputManager.registerInputDeviceListener(new InputManager.InputDeviceListener() {
-
-                      //  @Override
-                    //    public void onInputDeviceAdded(int deviceId) {
-                            //Log.d("Input", "InputDeviceAdded: " + deviceId);
-                            //Toast.makeText(getBaseContext(), "Oninputadd: " + deviceId, Toast.LENGTH_SHORT).show();
-
-                          //identifier le device
-                            //View UsbBouton_rouge=new View();
-                       // }
-
-//                        @Override
-  //                      public void onInputDeviceRemoved(int deviceId) {
-                            //Log.d("Input", "InputDeviceRemoved: " + deviceId);
-                           // Toast.makeText(getBaseContext(), "onInputDeviceRemoved: " + deviceId, Toast.LENGTH_SHORT).show();
-    //                    }
-
-      //                  @Override
-        //                public void onInputDeviceChanged(int deviceId) {
-                          //  Log.d("Input", "InputDeviceChanged: " + deviceId);
-                        //    Toast.makeText(getBaseContext(), "InputDeviceChanged: " + deviceId, Toast.LENGTH_SHORT).show();
-          //              }
-
-            //        }, null);
-
-              //  } catch (Exception e) {
-                //    Toast.makeText(getBaseContext(), "erreur inputdev: " +e, Toast.LENGTH_SHORT).show();
-                  //  e.printStackTrace();
-                //}
-
-
-              //  try {
-
-                //    UsbManager mUsbManager = (UsbManager) getSystemService(this.USB_SERVICE);
-                  //  HashMap <String ,UsbDevice> UsbMap;
-                    //        UsbMap=mUsbManager.getDeviceList();
-
-                  //  if (UsbMap != null)
-                   // {
-                     //   Iterator<UsbDevice> deviceIterator = UsbMap.values().iterator();
-                       // while (deviceIterator.hasNext()) {
-                        //mUsbDevise = deviceIterator.next();
-                 //   Toast.makeText(getBaseContext(), "USb devise: " +mUsbDevise.getDeviceName(), Toast.LENGTH_SHORT).show(); ///dev/bus/usb/001/002
-                  //  Toast.makeText(getBaseContext(), "USb DeviceId: " +mUsbDevise.getDeviceId(), Toast.LENGTH_SHORT).show();//1002
-                  //  Toast.makeText(getBaseContext(), "USb DeviceProtocol: " +mUsbDevise.getDeviceProtocol(), Toast.LENGTH_SHORT).show();//0
-                 //   Toast.makeText(getBaseContext(), "USb InterfaceCount: " +mUsbDevise.getInterfaceCount(), Toast.LENGTH_SHORT).show();//1
-
-                   //     }
-                    //}
-                    //else
-                    //{
-                     //   Toast.makeText(getBaseContext(), "USbMap Vide: ", Toast.LENGTH_SHORT).show();
-                    //}
-               // } catch (Exception e) {
-                 //   e.printStackTrace();
-                   // Toast.makeText(getBaseContext(), "erreur Usb : " + e, Toast.LENGTH_SHORT).show();
-                //}
 
                return true;
             // Clear the log view fragment.
             case R.id.usb_item:
         //   ControlTic controltic=new ControlTic();
 
-                new DownloadTaskHttps().execute(apidev7);
+                new DownloadTaskHttps().execute(apidev7);//connection e-venement
+               //new ControlTaskHttps().execute(apidev6);//Controle ticket
                 return true;
             case R.id.clear_action:
                 //Quitter le programme
@@ -387,14 +297,87 @@ public void Menu (View view)
         return false;
     }
 
+
+
+    private String https_Checkpoint (String urlString) throws  IOException {
+
+        String result="";
+        URL url = new URL(urlString);
+
+        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+        conn.setReadTimeout(6000 /* milliseconds */);
+        conn.setConnectTimeout(5000 /* milliseconds */);
+        // conn.setRequestMethod("GET");
+        conn.setDoInput(true);
+        conn.setDoOutput(true);
+
+        conn.setChunkedStreamingMode(0);
+
+        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
+
+        conn.connect();
+
+
+        if (conn.getInputStream()!=null)
+        {
+
+
+            //Log.i(TAG, "Checkpoint:"+json.toString());
+
+            try {
+                result=  getStringFromInputStream(conn.getInputStream());
+            } catch (Exception e) {
+                Log.i(TAG, "erreur InputStream: " + e);
+            }
+
+        }
+
+        return result;
+    }
+
+    private class CheckpointTaskHttps extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... urls) {
+            try {
+
+                return https_Checkpoint(urls[0]);
+
+                // return loadFromNetwork(urls[0]);
+            } catch (IOException e) {
+                Log.i(TAG, "Erreur connection: "+e);
+                return null;
+            }
+        }
+
+        /**
+         * Uses the logging framework to display the output of the fetch
+         * operation in the log fragment.
+         */
+        @Override
+        protected void onPostExecute(String result) {
+            // Log.i(TAG, result);
+            //affichage du resultat dans un toast
+            Bundle arg=new Bundle();
+            try {
+
+             arg.putString(JSON_CHECKPOINT,result);
+
+            } catch (Exception e) {
+              Log.i(TAG, "Erreur Put arg : "+e);
+            }
+            showFragment(msimpleTextFragment,arg);
+        }
+    }
+
     private class DownloadTaskHttps extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... urls) {
             try {
+
                 return https_test(urls[0]);
-                //return https_token (urls[0]);
-                //return httpstestconnect(urls[0]);r/tck.php/control
 
                 // return loadFromNetwork(urls[0]);
             } catch (IOException e) {
@@ -427,13 +410,13 @@ public void Menu (View view)
      * Implementation of AsyncTask, to fetch the data in the background away from
      * the UI thread.
      */
-    private class DownloadTask extends AsyncTask<String, Void, String> {
+    private class ControlTaskHttps extends AsyncTask<String, Void, String> {
 
         @Override
-        protected String doInBackground(String... urls) {
+        protected String doInBackground(String...urls) {
             try {
 
-                return String.valueOf(httptestconnect(urls[0]));
+                return String.valueOf(https_control(urls[0]));
                // return loadFromNetwork(urls[0]);
             } catch (IOException e) {
                 Log.i(TAG, "Erreur connection: "+e);
@@ -452,41 +435,78 @@ public void Menu (View view)
         }
     }
 
-    /**
-     * Initiates the fetch operation.
-     */
-    private String loadFromNetwork(String urlString) throws IOException {
-        InputStream stream = null;
-        String str = "";
 
-        try {
-            stream = downloadUrl(urlString);
-            str = readIt(stream, 500);
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
-        }
-        return str;
-    }
+    private String https_control (String urlString) throws  IOException {
 
-    private int httptestconnect (String urlString) throws IOException {
 
+
+        String token="";
         URL url = new URL(urlString);
 
+        Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        //if (url.getProtocol().toLowerCase().equals("https")) {
+        //trustAllHosts();
 
-        conn.setReadTimeout(10000 /* milliseconds */);
-        conn.setConnectTimeout(15000 /* milliseconds */);
-        conn.setRequestMethod("GET");
+        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+        conn.setReadTimeout(20000 /* milliseconds */);
+        conn.setConnectTimeout(25000 /* milliseconds */);
+        // conn.setRequestMethod("GET");
         conn.setDoInput(true);
-        conn.setRequestProperty("User-Agent", "e-venement-app/");
-        // Start the query
-        conn.connect();
-        return conn.getResponseCode();
-    }
+        conn.setDoOutput(true);
 
+        conn.setChunkedStreamingMode(0);
+
+        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
+
+
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
+
+       //"https://dev3.libre-informatique.fr/tck.php/ticket/control/action?control[id]=&control[ticket_id]=2222&control[checkpoint_id]=1&control[comment]=";
+
+        //Et on y rajoute nos param�tres
+        nameValuePairs.add(new BasicNameValuePair("control[ticket_id]", "2222"));
+        nameValuePairs.add(new BasicNameValuePair("control[checkpoint_id]", "1"));
+        //nameValuePairs.add(new BasicNameValuePair("control[id]", ""));
+        //nameValuePairs.add(new BasicNameValuePair("control[comment]", ""));
+
+        OutputStream os = conn.getOutputStream();
+        BufferedWriter writer2 = new BufferedWriter(
+                new OutputStreamWriter(os, "UTF-8"));
+        writer2.write(getQuery(nameValuePairs));
+        writer2.flush();
+        //writer2.close();
+        //os.close();
+
+        conn.connect();
+
+        String headerName = null;
+
+        for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
+        {
+            Log.i (TAG,headerName+": "+conn.getHeaderField(i));
+        }
+
+
+        if (conn.getInputStream()!=null)
+        {
+            json=  convertInputStreamToJson(conn.getInputStream());
+
+            Log.i(TAG,json.toString());
+            ControlTic mControlTic=new ControlTic();
+
+            try {
+                mControlTic.setJSONOBJET(json);
+              //  Log.i(TAG, "JSON: "+mControlTic.getSUCCESS());
+            } catch (Exception e) {
+                Log.i(TAG, "erreur json: " + e);
+            }
+
+        }
+
+        return token;
+    }
 
     private String https_test (String urlString) throws  IOException {
 
@@ -497,7 +517,7 @@ public void Menu (View view)
 
 Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
-       // if (url.getProtocol().toLowerCase().equals("https")) {
+       //if (url.getProtocol().toLowerCase().equals("https")) {
             trustAllHosts();
 
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
@@ -513,33 +533,32 @@ Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
             conn.setChunkedStreamingMode(0);
 
-            conn.setRequestProperty("User-Agent", "e-venement-app/");
+            conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
 
-       // OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
+        //OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
         //writer.getEncoding();
         //writer.write("&signin[username]=antoine");
         //writer.write("&signin[password]=android2015@");
         //writer.write("?control[id]=");
         //writer.write("&control[ticket_id]=2222");
         //writer.write("&control[checkpoint_id]=1");
-      //  writer.write("&control[comment]=");
+        //writer.write("&control[comment]=");
 
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
+       List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
 
-        //Et on y rajoute nos param�tres
-        nameValuePairs.add(new BasicNameValuePair("signin[username]", "antoine"));
-        nameValuePairs.add(new BasicNameValuePair("signin[password]", "android2015@"));
-        //nameValuePairs.add(new BasicNameValuePair("control[id]", ""));
+       //Et on y rajoute nos param�tres
+       nameValuePairs.add(new BasicNameValuePair("signin[username]", "antoine"));
+       nameValuePairs.add(new BasicNameValuePair("signin[password]", "android2015@"));
+       //nameValuePairs.add(new BasicNameValuePair("control[id]", ""));
         //nameValuePairs.add(new BasicNameValuePair("control[ticket_id]", "2222"));
         //nameValuePairs.add(new BasicNameValuePair("control[checkpoint_id]", "1"));
         //nameValuePairs.add(new BasicNameValuePair("control[comment]", ""));
 
-        OutputStream os = conn.getOutputStream();
-        BufferedWriter writer2 = new BufferedWriter(
-        new OutputStreamWriter(os, "UTF-8"));
-        writer2.write(getQuery(nameValuePairs));
-        writer2.flush();
-        //writer2.close();
+       OutputStream os = conn.getOutputStream();
+       BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+       writer2.write(getQuery(nameValuePairs));
+       writer2.flush();
+       //writer2.close();
         //os.close();
 
        // conn.setEntity(new UrlEncodedFormEntity(nameValuePairs));
@@ -547,44 +566,30 @@ Log.i(TAG, "Protocol: "+url.getProtocol().toString());
         //writer.write("&signin[_csrf_token]="+CSRFTOKEN);
         //writer.flush();
 
-        conn.connect();
+       conn.connect();
 
-        String headerName = null;
+       String headerName = null;
 
-        for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
-        {
-            //data=data+"Header Nme : " + headerName;
-            //data=data+conn.getHeaderField(i);
-            // Log.i (TAG,headerName);
-            Log.i (TAG,headerName+": "+conn.getHeaderField(i));
+       for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
+       {
+           Log.i (TAG,headerName+": "+conn.getHeaderField(i));
+       }
 
-        }
+       int responseCode = conn.getResponseCode();
 
-        int responseCode = conn.getResponseCode();
+       if(responseCode == conn.HTTP_OK) {
+          final String COOKIES_HEADER = "Set-Cookie";
+          cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+       }
 
-        if(responseCode == conn.HTTP_OK) {
-            final String COOKIES_HEADER = "Set-Cookie";
-            cookie = conn.getHeaderField(COOKIES_HEADER);
-        }
-
-        if (conn.getInputStream()!=null)
-        {
-
-           // token =getStringFromInputStream(conn.getInputStream());
-            Log.i(TAG,readIt(conn.getInputStream(),15000));
-            token=readIt(conn.getInputStream(),15000);
-            Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
-            //data=readIt(conn.getInputStream(),7500);
-            //Log.i(TAG,token);
-            //token=readIt(conn.getInputStream(),7500);
-        }
-            //conn.connect();
-           // List<String> cookiesList = conn.getHeaderFields().get("Set-Cookie");
-
-
-       // }
-        //conn.disconnect();
-        return token;
+       if (conn.getInputStream()!=null)
+       {
+          // token =getStringFromInputStream(conn.getInputStream());
+           Log.i(TAG,readIt(conn.getInputStream(),15000));
+           token=readIt(conn.getInputStream(),15000);
+           Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
+       }
+       return token;
     }
 
 
@@ -648,9 +653,6 @@ Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
                 for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
                 {
-                    //data=data+"Header Nme : " + headerName;
-                    //data=data+conn.getHeaderField(i);
-                    // Log.i (TAG,headerName);
                     Log.i (TAG,headerName+": "+conn.getHeaderField(i));
                 }
 

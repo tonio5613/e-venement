@@ -281,16 +281,17 @@ containing a value of this type.
         public static final int alignBounds=0x7f090002;
         public static final int alignMargins=0x7f090003;
         public static final int bottom=0x7f090004;
-        public static final int bureau=0x7f09001e;
+        public static final int bureau=0x7f090025;
         public static final int center=0x7f090005;
         public static final int center_horizontal=0x7f090006;
         public static final int center_vertical=0x7f090007;
-        public static final int clear_action=0x7f09001c;
+        public static final int clear_action=0x7f090023;
         public static final int clip_horizontal=0x7f090008;
         public static final int clip_vertical=0x7f090009;
-        public static final int code_contole=0x7f090019;
+        public static final int code_contole=0x7f09001a;
         public static final int end=0x7f09000a;
-        public static final int fetch_action=0x7f09001b;
+        public static final int errors_controle=0x7f09001f;
+        public static final int fetch_action=0x7f090022;
         public static final int fill=0x7f09000b;
         public static final int fill_horizontal=0x7f09000c;
         public static final int fill_vertical=0x7f09000d;
@@ -299,14 +300,21 @@ containing a value of this type.
         public static final int intro_fragment=0x7f090018;
         public static final int lauchscan=0x7f090013;
         public static final int left=0x7f09000e;
-        public static final int log_fragment=0x7f09001a;
+        public static final int listControle=0x7f090020;
+        public static final int log_fragment=0x7f090021;
+        public static final int message_controle=0x7f09001e;
+        public static final int newlog=0x7f090026;
+        public static final int numtic_controle=0x7f09001c;
         public static final int password=0x7f090016;
+        public static final int progressBar=0x7f09001b;
         public static final int right=0x7f09000f;
         public static final int save_log=0x7f090017;
         public static final int scan_title=0x7f090012;
+        public static final int spinner_checkpoint=0x7f090019;
         public static final int start=0x7f090010;
+        public static final int success_controle=0x7f09001d;
         public static final int top=0x7f090011;
-        public static final int usb_item=0x7f09001d;
+        public static final int usb_item=0x7f090024;
         public static final int username=0x7f090015;
         public static final int vertical=0x7f090001;
     }
@@ -324,16 +332,17 @@ containing a value of this type.
     public static final class string {
         public static final int Annuler=0x7f060000;
         public static final int app_name=0x7f060001;
-        public static final int clear_text=0x7f060002;
-        public static final int connection_error=0x7f060003;
-        public static final int e_control_text=0x7f060004;
-        public static final int eve_android_text=0x7f060005;
-        public static final int fetch_text=0x7f060006;
-        public static final int intro_message=0x7f060007;
-        public static final int login_text=0x7f060008;
-        public static final int ok=0x7f060009;
-        public static final int sav_log=0x7f06000a;
-        public static final int welcome_message=0x7f06000b;
+        public static final int checkpoint_hint=0x7f060002;
+        public static final int clear_text=0x7f060003;
+        public static final int connection_error=0x7f060004;
+        public static final int e_control_text=0x7f060005;
+        public static final int eve_android_text=0x7f060006;
+        public static final int fetch_text=0x7f060007;
+        public static final int intro_message=0x7f060008;
+        public static final int login_text=0x7f060009;
+        public static final int ok=0x7f06000a;
+        public static final int sav_log=0x7f06000b;
+        public static final int welcome_message=0x7f06000c;
     }
     public static final class style {
         public static final int AppTheme=0x7f070000;

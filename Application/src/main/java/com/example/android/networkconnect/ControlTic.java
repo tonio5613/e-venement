@@ -6,8 +6,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Date;
-
 /**
  * Created by adonniou on 29/04/15.
  */
@@ -28,7 +26,7 @@ public class ControlTic {
     //      "message": "Contrôle: échec !",
     //     "timestamp": "27/04/2015 21:52:25",
 
-    int TICKETS_ID;
+    String TICKETS_ID;
     String TICKETS_GAUGE;
     String TICKETS_MANIFESTATION;
     String TICKETS_MANIFESTATION_URL;
@@ -73,7 +71,7 @@ public class ControlTic {
 //            ]
 //        },
 
-    JSONObject CONTACTS;
+    JSONArray CONTACTS;
     JSONObject CONTACT;
     //String CONTACTS;
     int CONTACTS_ID;
@@ -102,45 +100,203 @@ public class ControlTic {
         return JSONOBJET;
     }
 
+    @Override
+    public String toString()
+    {
+        return JSONOBJET.toString();
+    }
+
     public void setJSONOBJET(JSONObject JSONOBJET) {
 
         this.JSONOBJET = JSONOBJET;
 
         try {
-      this.SUCCESS=JSONOBJET.getString("success");
-      this.MESSAGE=JSONOBJET.getString("message");
-      this.TIMESTAMP=JSONOBJET.getString("timestamp");
+            //gestion pour un échec
 
-      this.JSONARRAY_TICKETS=JSONOBJET.getJSONArray("tickets");
 
-      JSONArray json_array_tic=JSONOBJET.getJSONArray("tickets");
-            this.TICKETS_ID=json_array_tic.getInt(0);
-            this.TICKETS_GAUGE=json_array_tic.getString(1);
-            this.TICKETS_MANIFESTATION=json_array_tic.getString(2);
-            this.TICKETS_MANIFESTATION_URL=json_array_tic.getString(3);
-            this.TICKETS_SEAT=json_array_tic.getString(4);
-            this.TICKETS_PRICE=json_array_tic.getString(5);
-            this.TICKETS_VALUE=json_array_tic.getString(6);
-            this.TICKETS_VALUE_TXT=json_array_tic.getString(7);
-            this.TICKETS_URL=json_array_tic.getString(8);
-            this.TICKETS_USERS=json_array_tic.getString(9);
-            this.TICKETS_CANCEL=json_array_tic.getString(10);
+            if (JSONOBJET.getString("success")!=null)
+                this.SUCCESS=JSONOBJET.getString("success");
 
+            if(JSONOBJET.getString("message")!=null)
+                this.MESSAGE=JSONOBJET.getString("message");
+
+            if(JSONOBJET.getString("timestamp")!=null)
+            this.TIMESTAMP=JSONOBJET.getString("timestamp");
+
+            //   "tickets": [
+            //{
+            //  "id": 4090,
+            //    "gauge": "Cat 1 - Parterre",
+            //  "manifestation": "Summit e-venement 2015 @ lun. 27 avr. 2015 22:00",
+            // "manifestation_url": "https://test.libre-informatique.fr/event.php/manifestation/1.html",
+            //"seat": "C60",
+//                "price": "TPLEIN",
+//                "value": "50.000",
+//                "value_txt": "50,00 €",
+//                "url": "https://test.libre-informatique.fr/tck.php/ticket/4090",
+//                "users": [
+//            "vel"
+//            ],
+//            "cancel": null
+//        }
+//        ],
+
+            if(JSONOBJET.getJSONArray("tickets")!=null) {
+                this.JSONARRAY_TICKETS = JSONOBJET.getJSONArray("tickets");
+
+                if(JSONARRAY_TICKETS.getJSONObject(0).getString("id")!=null)
+                this.TICKETS_ID = JSONARRAY_TICKETS.getJSONObject(0).getString("id");
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("gauge")!=null)
+                        this.TICKETS_GAUGE = JSONARRAY_TICKETS.getJSONObject(0).getString("gauge");
+                } catch (JSONException e) {
+                    this.TICKETS_GAUGE ="No";
+                   // Log.i(TAG,"gauge: "+TICKETS_GAUGE);
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation")!=null)
+                      this.TICKETS_MANIFESTATION=JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation");
+                } catch (JSONException e) {
+                    this.TICKETS_MANIFESTATION="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation_url")!=null)
+                        this.TICKETS_MANIFESTATION_URL=JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation_url");
+                } catch (JSONException e) {
+                    this.TICKETS_MANIFESTATION_URL="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("seat")!=null)
+                        this.TICKETS_SEAT=JSONARRAY_TICKETS.getJSONObject(0).getString("seat");
+                } catch (JSONException e) {
+                    this.TICKETS_SEAT="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("price")!=null)
+                        this.TICKETS_PRICE=JSONARRAY_TICKETS.getJSONObject(0).getString("price");
+                } catch (JSONException e) {
+                    this.TICKETS_PRICE="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("value")!=null)
+                        this.TICKETS_VALUE=JSONARRAY_TICKETS.getJSONObject(0).getString("value");
+                } catch (JSONException e) {
+                    this.TICKETS_VALUE="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("value_txt")!=null)
+                        this.TICKETS_VALUE_TXT=JSONARRAY_TICKETS.getJSONObject(0).getString("value_txt");
+                } catch (JSONException e) {
+                    this.TICKETS_VALUE_TXT="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("url")!=null)
+                       this.TICKETS_URL=JSONARRAY_TICKETS.getJSONObject(0).getString("url");
+                } catch (JSONException e) {
+                    this.TICKETS_URL="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getJSONArray("users").getString(0)!=null)
+                      this.TICKETS_USERS=JSONARRAY_TICKETS.getJSONObject(0).getJSONArray("users").getString(0);
+                } catch (JSONException e) {
+                    this.TICKETS_USERS="No";
+                    e.printStackTrace();
+                }
+
+                try {
+                    if(JSONARRAY_TICKETS.getJSONObject(0).getString("cancel")!=null)
+                        this.TICKETS_CANCEL=JSONARRAY_TICKETS.getJSONObject(0).getString("cancel");
+                } catch (JSONException e) {
+                    this.TICKETS_CANCEL="No";
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                if(JSONOBJET.getJSONObject("details")!=null) {
+                    this.DETAILS = JSONOBJET.getJSONObject("details");
+
+                    try {
+                        if (DETAILS.getJSONObject("control") != null) {
+                            this.CONTROL=DETAILS.getJSONObject("control");
+
+                            try {
+                                if(CONTROL.getJSONArray("errors")!=null)
+                                {
+                                    this.ERRORS_ARRAY=CONTROL.getJSONArray("errors");
+
+                                    try {
+                                        if(ERRORS_ARRAY.getString(0)!=null) {
+
+                                            //this.DETAILS_CONTROL_ERRORS = JSONOBJET.getJSONObject("details").getJSONObject("control").getJSONArray("errors").getString(0);
+                                            this.DETAILS_CONTROL_ERRORS =ERRORS_ARRAY.getString(0);
+                                        }
+                                    } catch (JSONException e) {
+                                        this.DETAILS_CONTROL_ERRORS="No";
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                this.ERRORS_ARRAY=null;
+                                e.printStackTrace();
+                            }
+
+                        }
+                    } catch (JSONException e) {
+                        this.CONTROL=null;
+                        e.printStackTrace();
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                this.DETAILS =null;
+            }
+
+            //DETAILS_CONTROL_ERRORS=JSONOBJET.get("details").toString();
             this.DETAILS=JSONOBJET.getJSONObject("details");
+
+
+
             this.CONTROL=DETAILS.getJSONObject("control");
 
             this.DETAILS_CONTROL_COMMENT=CONTROL.getString("comment");
-            this.ERRORS_ARRAY=CONTROL.getJSONArray("errors");
 
-            this.CONTACTS=DETAILS.getJSONObject("contacts");
-            this.CONTACTS.getJSONObject(String.valueOf(TICKETS_ID)).getJSONObject("contact");
-            this.CONTACTS_ID=CONTACT.getInt("id");
-            this.CONTACTS_CONTACT_NAME=CONTACT.getString("name");
-            this.CONTACTS_CONTACT_COMMENT=CONTACT.getString("comment");
-            this.CONTACTS_CONTACT_URL=CONTACT.getString("url");
-            this.CONTACTS_CONTACT_FLASH=CONTACT.getString("flash");
+            //this.ERRORS_ARRAY=CONTROL.getJSONArray("errors");
+            // this.DETAILS_CONTROL_ERRORS=ERRORS_ARRAY.get(0).toString();
+            //this.DETAILS_CONTROL_ERRORS=CONTROL.getString("errors").toString();
 
-            //ERRORS_ARRAY.get(0);
+            //this.CONTACTS=DETAILS.getJSONObject("contacts");
+
+
+            try {
+                if(DETAILS.getJSONArray("contacts")!=null);
+                {
+                    this.CONTACTS=DETAILS.getJSONArray("contacts");
+
+
+                }
+            } catch (JSONException e) {
+                this.CONTACTS=null;
+                e.printStackTrace();
+            }
+
+            //this.CONTACTS.getJSONObject(String.valueOf(TICKETS_ID)).getJSONObject("contact");
 
 
         } catch (JSONException e) {
@@ -149,6 +305,50 @@ public class ControlTic {
         }
 
     }
+
+
+    //ticket valide
+
+//    {
+//        "timestamp": "19/05/2015 17:28:52",
+//            "message": "Contrôle: ok.",
+//            "details": {
+//        "control": {
+//            "comment": null,
+//                    "errors": []
+//        },
+//        "contacts": {
+//            "22841": {
+//                "contact": {
+//                    "id": null,
+//                            "flash": null,
+//                            "comment": null,
+//                            "url": "https://dev3.libre-informatique.fr/rp.php/contact//edit",
+//                            "name": " "
+//                }
+//            }
+//        }
+//    },
+//        "success": true,
+//            "tickets": [
+//        {
+//            "id": 22841,
+//                "users": [
+//            "antoine"
+//            ],
+//                "price": "AssTP",
+//                "seat": null,
+//                "value_txt": "0,00 €",
+//                "value": "0.000",
+//                "manifestation_url": "https://dev3.libre-informatique.fr/event.php/manifestation/79",
+//                "gauge": "Fauteuils",
+//                "cancel": "https://dev3.libre-informatique.fr/tck.php/ticket/22841/controlCancel",
+//                "url": "https://dev3.libre-informatique.fr/tck.php/ticket/22841",
+    //            "manifestation": "Android @ mar. 19 mai 2015 18:00"
+  //      }
+      //  ]
+    //}
+
 
     public String getSUCCESS() {
         return SUCCESS;
@@ -174,11 +374,11 @@ public class ControlTic {
         this.TIMESTAMP = TIMESTAMP;
     }
 
-    public int getTICKETS_ID() {
+    public String getTICKETS_ID() {
         return TICKETS_ID;
     }
 
-    public void setTICKETS_ID(int TICKETS_ID) {
+    public void setTICKETS_ID(String TICKETS_ID) {
         this.TICKETS_ID = TICKETS_ID;
     }
 

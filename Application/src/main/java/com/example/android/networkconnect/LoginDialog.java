@@ -38,6 +38,7 @@ public class LoginDialog extends DialogFragment {
 
     private PreferenceManager mPreference;
     private JSONObject jsonLog_save;
+    private User user;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -53,6 +54,7 @@ public class LoginDialog extends DialogFragment {
         final CheckBox checkBox_save = (CheckBox) alertDialogView.findViewById(R.id.save_log);
 
         builder.setView(alertDialogView);
+user=new User();
 
         if (Read_log(getActivity()) != null) {
 
@@ -248,7 +250,7 @@ public class LoginDialog extends DialogFragment {
         }
     }
 
-    private JSONObject Read_log(Context context)
+    public JSONObject Read_log(Context context)
     {
         FileInputStream fIn = null;
         InputStreamReader isr = null;
@@ -266,7 +268,6 @@ public class LoginDialog extends DialogFragment {
             //affiche le contenu de mon fichier dans un popup surgissant
             Toast.makeText(context, "data: "+data,Toast.LENGTH_SHORT).show();
             json=new JSONObject(data);
-
         }
         catch (Exception e) {
             Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();

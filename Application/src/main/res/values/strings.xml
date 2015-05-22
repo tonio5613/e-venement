@@ -25,4 +25,5 @@
     <string name="sav_log">Se souvenir de moi</string>
     <string name="ok">Ok</string>
     <string name="Annuler">Annuler</string>
+    <string name="checkpoint_hint">Selection un point de controle</string>
 </resources>
