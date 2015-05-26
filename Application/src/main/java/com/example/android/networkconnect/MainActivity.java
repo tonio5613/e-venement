@@ -202,6 +202,7 @@ public class MainActivity extends FragmentActivity                      {
             return;
 
         final FragmentManager fm = getSupportFragmentManager();
+
         final FragmentTransaction ft = fm.beginTransaction();
  // We can also animate the changing of fragment
 
@@ -245,11 +246,7 @@ if(newfragment==msimpleTextFragment) {
         }
     }
 
-    public void Scan_ticket_fragment(View v) {
 
-       CheckpointTaskHttps mCheckpointTaskHttps= (CheckpointTaskHttps) new CheckpointTaskHttps().execute(apidev8);
-       //showFragment(this.msimpleTextFragment);
-    }
 
 public void Menu (View view)
 {
@@ -275,7 +272,7 @@ public void Menu (View view)
 
             case R.id.bureau:
                 try {
-            showFragment(this.mbureauFragment,null);
+           // showFragment(this.mbureauFragment,null);
                 } catch (Exception e) {
                     Toast.makeText(getBaseContext(), "Erreur show fragment: ", Toast.LENGTH_SHORT).show();
 
@@ -286,7 +283,7 @@ public void Menu (View view)
             case R.id.usb_item:
         //   ControlTic controltic=new ControlTic();
 
-                new DownloadTaskHttps().execute(apidev7);//connection e-venement
+                //new DownloadTaskHttps().execute(apidev7);//connection e-venement
                //new ControlTaskHttps().execute(apidev6);//Controle ticket
                 return true;
             case R.id.clear_action:
@@ -299,77 +296,9 @@ public void Menu (View view)
 
 
 
-    private String https_Checkpoint (String urlString) throws  IOException {
-
-        String result="";
-        URL url = new URL(urlString);
-
-        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-        conn.setReadTimeout(6000 /* milliseconds */);
-        conn.setConnectTimeout(5000 /* milliseconds */);
-        // conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-
-        conn.setChunkedStreamingMode(0);
-
-        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
-
-        conn.connect();
 
 
-        if (conn.getInputStream()!=null)
-        {
 
-
-            //Log.i(TAG, "Checkpoint:"+json.toString());
-
-            try {
-                result=  getStringFromInputStream(conn.getInputStream());
-            } catch (Exception e) {
-                Log.i(TAG, "erreur InputStream: " + e);
-            }
-
-        }
-
-        return result;
-    }
-
-    private class CheckpointTaskHttps extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... urls) {
-            try {
-
-                return https_Checkpoint(urls[0]);
-
-                // return loadFromNetwork(urls[0]);
-            } catch (IOException e) {
-                Log.i(TAG, "Erreur connection: "+e);
-                return null;
-            }
-        }
-
-        /**
-         * Uses the logging framework to display the output of the fetch
-         * operation in the log fragment.
-         */
-        @Override
-        protected void onPostExecute(String result) {
-            // Log.i(TAG, result);
-            //affichage du resultat dans un toast
-            Bundle arg=new Bundle();
-            try {
-
-             arg.putString(JSON_CHECKPOINT,result);
-
-            } catch (Exception e) {
-              Log.i(TAG, "Erreur Put arg : "+e);
-            }
-            showFragment(msimpleTextFragment,arg);
-        }
-    }
 
     private class DownloadTaskHttps extends AsyncTask<String, Void, String> {
 
@@ -962,6 +891,13 @@ String data=null;
         mLogFragment =
                 (LogFragment) getSupportFragmentManager().findFragmentById(R.id.log_fragment);
         msgFilter.setNext(mLogFragment.getLogView());
+    }
+
+    public void Scan_Main_fragment(View v) {
+
+        Log.i(TAG, "Bonton control MainActivity OK");
+        //CheckpointTaskHttps mCheckpointTaskHttps= (CheckpointTaskHttps) new CheckpointTaskHttps().execute(apidev8); lauchscan
+        //showFragment(this.msimpleTextFragment);
     }
 
 

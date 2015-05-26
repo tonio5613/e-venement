@@ -87,6 +87,7 @@ public class ControlFragment extends Fragment {
 
     private static JSONObject json;
 
+        //List des contoles
     private final ArrayList<ControlTic> ListControl= new ArrayList<ControlTic>();
 
     private static final String TAG = "EDroide";
@@ -94,7 +95,6 @@ public class ControlFragment extends Fragment {
     public String apidev6="https://dev3.libre-informatique.fr/tck.php/ticket/control/action";
 
     public String scan_controle1="";
-    // For situations where the app wants to modify text at Runtime, exposing the TextView.
 
     View createdView;
 
@@ -129,10 +129,10 @@ public class ControlFragment extends Fragment {
     }
 
     private class ControlTaskHttps extends AsyncTask<String, Void, ControlTic> {
+
         @Override
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
-         //   final ProgressDialog progressBar= (ProgressDialog)
         }
 
         @Override
@@ -147,17 +147,12 @@ public class ControlFragment extends Fragment {
                 return tic;
             }
         }
-        /**
-         * Uses the logging framework to display the output of the fetch
-         * operation in the log fragment.
-         */
+
         @Override
         protected void onPostExecute(ControlTic result) {
 
             ListControl.add(result);
             message=result.getMESSAGE();
-
-
 
             final TextView numtic_controle =(TextView) createdView.findViewById(R.id.numtic_controle);
             final TextView success_controle =(TextView) createdView.findViewById(R.id.success_controle);
@@ -177,21 +172,16 @@ public class ControlFragment extends Fragment {
                             errors_controle.setText("Détails: " + result.getDETAILS_CONTROL_ERRORS());
             }
 
-
-            //Toast.makeText(getActivity(), "Resultat: "+result.toString(), Toast.LENGTH_SHORT).show();
         }
     }
 
     private ControlTic https_control (String urlString) throws IOException {
 
         ControlTic mControlTic=new ControlTic();
-        String token="";
+
         URL url = new URL(urlString);
 
         Log.i(TAG, "Protocol: "+url.getProtocol().toString());
-
-        //if (url.getProtocol().toLowerCase().equals("https")) {
-        //trustAllHosts();
 
         HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 
@@ -205,16 +195,11 @@ public class ControlFragment extends Fragment {
 
         conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
 
-
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
-
-        //"https://dev3.libre-informatique.fr/tck.php/ticket/control/action?control[id]=&control[ticket_id]=2222&control[checkpoint_id]=1&control[comment]=";
 
         //Et on y rajoute nos param�tres
         nameValuePairs.add(new BasicNameValuePair("control[ticket_id]", scan_controle1));
         nameValuePairs.add(new BasicNameValuePair("control[checkpoint_id]", num_checkpoint));
-        //nameValuePairs.add(new BasicNameValuePair("control[id]", ""));
-        //nameValuePairs.add(new BasicNameValuePair("control[comment]", ""));
 
         OutputStream os = conn.getOutputStream();
         BufferedWriter writer2 = new BufferedWriter(
@@ -236,9 +221,6 @@ public class ControlFragment extends Fragment {
         if (conn.getInputStream()!=null)
         {
             json=  convertInputStreamToJson(conn.getInputStream());
-
-            Log.i(TAG,json.toString());
-
 
             try {
 
@@ -283,6 +265,7 @@ public class ControlFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
             Bundle savedInstanceState) {
+
         // Before initializing the textView, check if any arguments were provided via setArguments.
         processArguments();
 
@@ -303,14 +286,22 @@ public class ControlFragment extends Fragment {
         checkpoint_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         spinner_checkpoint.setAdapter(checkpoint_adapter);
-        //spinner_checkpoint.clearDisappearingChildren();
-
 
         scan_controle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                scan_controle1=scan_controle.getText().toString();
-                new ControlTaskHttps().execute(apidev6);
+                scan_controle1 = scan_controle.getText().toString();
+                if (scan_controle1 != "") {
+                    try {
+                        new ControlTaskHttps().execute(apidev6);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    scan_controle.setText("");
+                }
             }
         });
 
@@ -321,7 +312,7 @@ public class ControlFragment extends Fragment {
             public void onItemSelected(AdapterView parent, View view, int position, long id) {
                 try
                 {
-Log.i(TAG,"Selection: "+listcheckpoint[position]);
+                    Log.i(TAG,"Selection: "+listcheckpoint[position]);
                     checkpoint=listcheckpoint[position];
                     num_checkpoint="";
                     Pattern pattern = Pattern.compile("(\\d+)");
@@ -341,15 +332,12 @@ Log.i(TAG,"Selection: "+listcheckpoint[position]);
                 }
             }
 
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
 
             }
         });
-
-
 
         // Create a new TextView and set its text to whatever was provided.
 
@@ -389,6 +377,7 @@ Log.i(TAG,"Selection: "+listcheckpoint[position]);
         // For most objects we'd handle the multiple possibilities for initialization variables
         // as multiple constructors.  For Fragments, however, it's customary to use
         // setArguments / getArguments.
+
         if (getArguments() != null) {
             Bundle args = getArguments();
             if (args.containsKey(JSON_CHECKPOINT))
@@ -399,25 +388,18 @@ Log.i(TAG,"Selection: "+listcheckpoint[position]);
 
                 //Js.getJSONArray(args.getString(JSON_CHECKPOINT));
                 String data=args.getString(JSON_CHECKPOINT);
-                Log.i(TAG, "Arg_Controltic: "+data);
-
-                //listcheckpoint= data.split(",");
-
-
+                //Log.i(TAG, "Arg_checkpoint: "+data);
 
                 JSONObject checkpoints=new JSONObject(data);
-                Log.i(TAG, "JSON String: " + checkpoints.toString());
-
-                //checkpoints.getJSONObject(data);
-                //checkpoints.optJSONObject(data);
+                //Log.i(TAG, "JSON String: " + checkpoints.toString());
 
                 JSONArray tab_checkpoints=new JSONArray();
                 tab_checkpoints= checkpoints.names();
 
 
-                Log.i(TAG, "tableau: "+tab_checkpoints.toString());
+                //Log.i(TAG, "tableau: "+tab_checkpoints.toString());
                 //listcheckpoint=data.split(",");
-String tab[]=null;
+                    String tab[]=null;
                     int var=0;
                     if(tab_checkpoints.length()>1) {
 
@@ -435,21 +417,18 @@ String tab[]=null;
                     for(int i=0;i<tab_checkpoints.length();i++)
                 {
 
-                        Log.i(TAG,"Tableau JSON: "+tab_checkpoints.get(i).toString());
+                    //Log.i(TAG,"Tableau JSON: "+tab_checkpoints.get(i).toString());
 
-                    Log.i(TAG,"Valeur JSON: "+checkpoints.get(tab_checkpoints.get(i).toString()));
-String entree=tab_checkpoints.get(i).toString()+" "+checkpoints.get(tab_checkpoints.get(i).toString());
+                   // Log.i(TAG,"Valeur JSON: "+checkpoints.get(tab_checkpoints.get(i).toString()));
+                    String entree=tab_checkpoints.get(i).toString()+" "+checkpoints.get(tab_checkpoints.get(i).toString());
 
                     listcheckpoint[i+var]=entree;
-
                 }
 
                 } catch (Exception e) {
                 Log.i(TAG,"Erreur Tableau JSON: "+e.toString());
                 e.printStackTrace();
             }
-
-
             }
             if (args.containsKey(TEXT_KEY)) {
                 mText = args.getString(TEXT_KEY);

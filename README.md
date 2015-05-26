@@ -1,8 +1,7 @@
-Android NetworkConnect Sample
+Android E-venement
 ===================================
 
-This sample demonstrates how to connect to the network and fetch raw HTML using
-HttpURLConnection. AsyncTask is used to perform the fetch on a background thread.
+Application Android pour réaliser le controle des billets.
 
 Introduction
 ------------
@@ -23,7 +22,7 @@ Pre-requisites
 Screenshots
 -------------
 
-<img src="screenshots/main.png" height="400" alt="Screenshot"/> 
+<img src="screenshots/e-venement_menu.png" height="400" alt="Screenshot"/>
 
 Getting Started
 ---------------

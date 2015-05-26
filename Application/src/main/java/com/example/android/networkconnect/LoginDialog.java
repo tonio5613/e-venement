@@ -11,25 +11,41 @@ import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Created by adonniou on 16/04/15.
@@ -37,13 +53,16 @@ import java.net.URL;
 public class LoginDialog extends DialogFragment {
 
     private PreferenceManager mPreference;
-    private JSONObject jsonLog_save;
+    private JSONObject jsonLog;
     private User user;
+    private static final String TAG = "EDroide";
+    public String cookie;
 
+    public String apidev7="https://dev3.libre-informatique.fr/"; //+parametres Marche en POST réponse 200 ok
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         //return super.onCreateDialog(savedInstanceState);
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
@@ -53,10 +72,14 @@ public class LoginDialog extends DialogFragment {
         final EditText pass =(EditText) alertDialogView.findViewById(R.id.password);
         final CheckBox checkBox_save = (CheckBox) alertDialogView.findViewById(R.id.save_log);
 
-        builder.setView(alertDialogView);
-user=new User();
 
+
+        builder.setView(alertDialogView);
+        user=new User();
+
+        //
         if (Read_log(getActivity()) != null) {
+
 
             try {
                 JSONObject js=Read_log(getActivity());
@@ -64,6 +87,7 @@ user=new User();
                 login.setText(js.getString("login"),null);
                 pass.setText(js.getString("pass"),null);
                 hote.setText(js.getString("hote"), null);
+                user.setUser(js.getString("login"),js.getString("pass"),js.getString("hote"));
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -85,31 +109,39 @@ user=new User();
                             log = log.trim();
                             log = log.toLowerCase();
 
+
 //récuperer le pass + trim + minuscule
                             String pas = pass.getText().toString();
                             pas = pas.trim();
                             pas = pas.toLowerCase();
 
 //récuperer l'hote + trim + minuscule
-                            String hot= hote.getText().toString();
+                            String hot = hote.getText().toString();
                             hot = hot.trim();
-                            hot =hot.toLowerCase();
+                            hot = hot.toLowerCase();
 
-                            JSONObject JSONLogin=new JSONObject();
+                            JSONObject JSONLogin = new JSONObject();
 
 
-//sauvegarde en local du login
-                            //
-                            DownloadTask requete = new DownloadTask();
+                            user.setUser(log, pas, hot);
 
-                         if (checkBox_save.isChecked()) {
-                                jsonLog_save = new JSONObject();
-                                jsonLog_save.put("login",log).toString();
-                                jsonLog_save.put("pass",pas).toString();
-                                jsonLog_save.put("hote",hot).toString();
-                                Save_log(getActivity(), jsonLog_save);
+                            try {
+                                LoginAsyncTask loginAsyncTask = (LoginAsyncTask) new LoginAsyncTask();
+                                loginAsyncTask.execute(apidev7);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                Log.i(TAG, "erreur requete: "+e);
+                            }
+
+                            if (checkBox_save.isChecked()) {
+                                jsonLog = new JSONObject();
+                                jsonLog.put("login", log).toString();
+                                jsonLog.put("pass", pas).toString();
+                                jsonLog.put("hote", hot).toString();
+                                Save_log(getActivity(), jsonLog);
                                 //signin[remember]
                             }
+
 
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -130,13 +162,13 @@ user=new User();
      * Implementation of AsyncTask, to fetch the login data in the background away from
      * the UI thread.
      */
-    private class DownloadTask extends AsyncTask<String, Void, String> {
+    private class LoginAsyncTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... urls) {
             try {
 
-                return loadFromNetwork(urls[0]);
+                return login_control(urls[0]);
             } catch (IOException e) {
                 return getString(R.string.connection_error);
             }
@@ -150,54 +182,93 @@ user=new User();
         protected void onPostExecute(String result) {
            // Log.i(TAG, result);
             //affichage du resultat dans un toast
-           Toast.makeText(getActivity(), "Result: " + result, Toast.LENGTH_SHORT).show();
+            Log.i(TAG , "Postexe: "+result);
+
 
         }
     }
 
-    /**
-     * Initiates the fetch operation.
-     */
-    private String loadFromNetwork(String urlString) throws IOException {
-        InputStream stream = null;
-        String str = "";
+    private String login_control (String urlString) throws  IOException {
 
-        try {
-            stream = downloadUrl(urlString);
-            str = readIt(stream, 500);
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
-        }
-        return str;
-    }
 
-    /**
-     * Given a string representation of a URL, sets up a connection and gets
-     * an input stream.
-     *
-     * @param urlString A string representation of a URL.
-     * @return An InputStream retrieved from a successful HttpURLConnection.
-     * @throws java.io.IOException
-     */
-    private InputStream downloadUrl(String urlString) throws IOException {
-        // BEGIN_INCLUDE(get_inputstream)
+
+        String token="";
         URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setReadTimeout(10000 /* milliseconds */);
-        conn.setConnectTimeout(15000 /* milliseconds */);
-        conn.setRequestMethod("GET");
-        //conn.setRequestProperty("User-Agent", "e-venement-app/");
+
+        Log.i(TAG, "Protocol: "+url.getProtocol().toString());
+
+        //if (url.getProtocol().toLowerCase().equals("https")) {
+        trustAllHosts();
+
+        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+        conn.setReadTimeout(20000 /* milliseconds */);
+        conn.setConnectTimeout(25000 /* milliseconds */);
+        // conn.setRequestMethod("GET");
         conn.setDoInput(true);
-        // Start the query
-        //Toast.makeText(getActivity(), "Connection Code: " + conn.getResponseCode(), Toast.LENGTH_SHORT).show();
+        conn.setDoOutput(true);
+
+        conn.setChunkedStreamingMode(0);
+
+        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
+
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
+
+        //Et on y rajoute nos param�tres
+
+        nameValuePairs.add(new BasicNameValuePair("signin[username]", user.getLOGIN()));
+        nameValuePairs.add(new BasicNameValuePair("signin[password]", user.getPASS()));
+
+        OutputStream os = conn.getOutputStream();
+        BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+        writer2.write(getQuery(nameValuePairs));
+        writer2.flush();
+        //writer2.close();
+        //os.close();
 
         conn.connect();
 
-        InputStream stream = conn.getInputStream();
-        return stream;
-        // END_INCLUDE(get_inputstream)
+        String headerName = null;
+
+        for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
+        {
+            Log.i (TAG,headerName+": "+conn.getHeaderField(i));
+        }
+
+        int responseCode = conn.getResponseCode();
+
+        if(responseCode == conn.HTTP_OK) {
+            final String COOKIES_HEADER = "Set-Cookie";
+            cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+        }
+
+        if (conn.getInputStream()!=null)
+        {
+            Log.i(TAG,readIt(conn.getInputStream(),15000));
+            token=conn.getHeaderField(1);
+            Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
+        }
+        return token;
+    }
+
+    private String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException
+    {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+
+        for (NameValuePair pair : params)
+        {
+            if (first)
+                first = false;
+            else
+                result.append("&");
+
+            result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
+        }
+
+        return result.toString();
     }
 
     /**
@@ -282,5 +353,53 @@ user=new User();
             } */
         return json;
     }
+    private static void trustAllHosts() {
+
+        X509TrustManager easyTrustManager = new X509TrustManager() {
+
+            public void checkClientTrusted(
+                    X509Certificate[] chain,
+                    String authType) throws CertificateException {
+                // Oh, I am easy!
+            }
+
+            public void checkServerTrusted(
+                    X509Certificate[] chain,
+                    String authType) throws CertificateException {
+                // Oh, I am easy!
+            }
+
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+        };
+
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[]{easyTrustManager};
+
+        // Install the all-trusting trust manager
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getStringFromInputStream(InputStream stream) throws IOException
+    {
+        int n = 0;
+        char[] buffer = new char[1024 * 4];
+        InputStreamReader reader = new InputStreamReader(stream, "UTF8");
+        StringWriter writer = new StringWriter();
+        while (-1 != (n = reader.read(buffer))) writer.write(buffer, 0, n);
+        return writer.toString();
+    }
+
 
 }

@@ -78,8 +78,7 @@ public class User {
 
                 osw.write(sav_log.toString());
                 osw.flush();
-                //popup surgissant pour le résultat
-             //   Toast.makeText(context, "Settings saved", Toast.LENGTH_SHORT).show();
+
             } catch (Exception e) {
               //  Toast.makeText(context, "Settings not saved", Toast.LENGTH_SHORT).show();
             } finally {
