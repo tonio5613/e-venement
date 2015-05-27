@@ -24,6 +24,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,6 +38,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -59,6 +61,7 @@ public class LoginDialog extends DialogFragment {
     public String cookie;
 
     public String apidev7="https://dev3.libre-informatique.fr/"; //+parametres Marche en POST réponse 200 ok
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         //return super.onCreateDialog(savedInstanceState);
@@ -127,7 +130,7 @@ public class LoginDialog extends DialogFragment {
 
                             try {
                                 LoginAsyncTask loginAsyncTask = (LoginAsyncTask) new LoginAsyncTask();
-                                loginAsyncTask.execute(apidev7);
+                                loginAsyncTask.execute("https://"+hot+".libre-informatique.fr/");
                             } catch (Exception e) {
                                 e.printStackTrace();
                                 Log.i(TAG, "erreur requete: "+e);
@@ -296,12 +299,14 @@ public class LoginDialog extends DialogFragment {
 
         if(Read_log(context)!=null)
         {
-            Toast.makeText(context, "Compte existant: ",Toast.LENGTH_SHORT).show();
+            context.deleteFile("settings.txt");
 
         }
         else {
             try {
+
                 fOut = context.openFileOutput("settings.txt", Context.MODE_APPEND);
+
                 osw = new OutputStreamWriter(fOut);
 
                 osw.write(sav_log.toString());
@@ -366,7 +371,7 @@ public class LoginDialog extends DialogFragment {
             public void checkServerTrusted(
                     X509Certificate[] chain,
                     String authType) throws CertificateException {
-                // Oh, I am easy!
+
             }
 
             public X509Certificate[] getAcceptedIssuers() {
@@ -383,11 +388,12 @@ public class LoginDialog extends DialogFragment {
             SSLContext sc = SSLContext.getInstance("TLS");
 
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
-
+            //Log.i(TAG,"TrustManager: "+sc.getProtocol());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
         } catch (Exception e) {
             e.printStackTrace();
+            Log.i(TAG, "Erreur trustManager: "+e);
         }
     }
 

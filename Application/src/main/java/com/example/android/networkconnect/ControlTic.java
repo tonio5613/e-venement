@@ -103,7 +103,7 @@ public class ControlTic {
     @Override
     public String toString()
     {
-        return JSONOBJET.toString();
+        return MESSAGE;
     }
 
     public void setJSONOBJET(JSONObject JSONOBJET) {

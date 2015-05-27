@@ -133,30 +133,31 @@ fa=super.getActivity();
         protected void onPostExecute(String result) {
              //Log.i(TAG, "PostResult: "+result);
             //affichage du resultat dans un toast
-            Bundle arg=new Bundle();
-            try {
-
-                arg.putString(JSON_CHECKPOINT,result);
-
-            } catch (Exception e) {
-                Log.i(TAG, "Erreur Put arg : "+e);
-            }
 
 
-            final FragmentManager fm = getActivity().getSupportFragmentManager();
-            final FragmentTransaction ft = fm.beginTransaction();
-            mControlFragment=(ControlFragment) new ControlFragment();
-            mControlFragment.setArguments(arg);
+                Bundle arg = new Bundle();
+                try {
 
-            ft.setCustomAnimations(android.R.anim.slide_in_left,
-              android.R.anim.slide_out_right);
+                    arg.putString(JSON_CHECKPOINT, result);
 
-        ft.replace(R.id.intro_fragment, mControlFragment);
+                } catch (Exception e) {
+                    Log.i(TAG, "Erreur Put arg : " + e);
+                }
 
-        ft.addToBackStack(null);
 
-        ft.commit();
+                final FragmentManager fm = getActivity().getSupportFragmentManager();
+                final FragmentTransaction ft = fm.beginTransaction();
+                mControlFragment = (ControlFragment) new ControlFragment();
+                mControlFragment.setArguments(arg);
 
+                ft.setCustomAnimations(android.R.anim.slide_in_left,
+                        android.R.anim.slide_out_right);
+
+                ft.replace(R.id.intro_fragment, mControlFragment);
+
+                ft.addToBackStack(null);
+
+                ft.commit();
         }
     }
 

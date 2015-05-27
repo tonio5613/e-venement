@@ -16,25 +16,20 @@
 
 package com.example.android.networkconnect;
 
-import android.app.ProgressDialog;
-import android.content.SharedPreferences;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.Layout;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.ListView;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -52,9 +47,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.acl.Group;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,6 +64,13 @@ public class ControlFragment extends Fragment {
     String mText;
     // Contains a resource ID for the text that will be displayed by this fragment.
     int mTextId = -1;
+
+    String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
+            "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
+            "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
+            "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
+            "Android", "iPhone", "WindowsMobile" };
+
 
 
     // Keys which will be used to store/retrieve text passed in via setArguments.
@@ -102,8 +102,16 @@ public class ControlFragment extends Fragment {
 
     private String message="";
 
+    Spinner spinner_checkpoint;
+
+    MySimpleArrayAdapter list_adapter;
+
+
+    ListView list_controle;
+
 
     public ControlFragment() {
+
     }
 
     private static JSONObject convertInputStreamToJson(InputStream inputStream) throws IOException{
@@ -152,6 +160,13 @@ public class ControlFragment extends Fragment {
         protected void onPostExecute(ControlTic result) {
 
             ListControl.add(result);
+
+            list_adapter = new MySimpleArrayAdapter(getActivity(),ListControl);
+
+            //list_adapter.setDropDownViewResource(R.layout.listcontrole);
+
+            list_controle.setAdapter(list_adapter);
+
             message=result.getMESSAGE();
 
             final TextView numtic_controle =(TextView) createdView.findViewById(R.id.numtic_controle);
@@ -269,19 +284,23 @@ public class ControlFragment extends Fragment {
         // Before initializing the textView, check if any arguments were provided via setArguments.
         processArguments();
 
-        createdView = inflater.inflate(R.layout.sample_main, container, false);
+        final ArrayList<String> list = new ArrayList<String>();
+        for (int i = 0; i < values.length; ++i) {
+            list.add(values[i]);
+        }
 
-        final ViewGroup list_controle =(ViewGroup) createdView.findViewById(R.id.listControle);
+        createdView = inflater.inflate(R.layout.controle_layout, container, false);
+
+
+        list_controle=(ListView) createdView.findViewById(R.id.listControle);
+
         final EditText scan_controle =(EditText) createdView.findViewById(R.id.code_contole);
+
+
+        spinner_checkpoint = (Spinner) createdView.findViewById(R.id.spinner_checkpoint);
 
         final ArrayAdapter<String> checkpoint_adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item,
                 listcheckpoint);
-
-        final ArrayAdapter<ControlTic> list_adapter = new ArrayAdapter<ControlTic>(getActivity(),android.R.layout.simple_list_item_1, ListControl);
-
-        list_adapter.setDropDownViewResource(android.R.layout.simple_list_item_1);
-
-        final Spinner spinner_checkpoint = (Spinner) createdView.findViewById(R.id.spinner_checkpoint);
 
         checkpoint_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
@@ -323,7 +342,7 @@ public class ControlFragment extends Fragment {
                         num_checkpoint=num_checkpoint+m.group();
                     }
                     Log.i(TAG, "numero: "+num_checkpoint);
-                    //num_checkpoint
+
 
                 }
                 catch (Exception e)
@@ -339,14 +358,17 @@ public class ControlFragment extends Fragment {
             }
         });
 
+        if(listcheckpoint.length<=1)
+        {
+            spinner_checkpoint.setVisibility(createdView.GONE);
+        }
+
+
         // Create a new TextView and set its text to whatever was provided.
 
         if (message != null) {
             try {
-                //mTextView = new TextView(getActivity());
-                //mTextView.setGravity(Gravity.CENTER);
-                //mTextView.setText(message);
-               // container.addView(mTextView);
+
                 Log.i("SimpleTextFragment", message);
             } catch (Exception e) {
                 Log.i(TAG, "Erreur affichage:"+e);
@@ -410,7 +432,8 @@ public class ControlFragment extends Fragment {
 
                     if(tab_checkpoints.length()<=1)
                     {
-                        listcheckpoint = new String[tab_checkpoints.length()];
+                        //spinner_checkpoint.setVisibility(View.GONE);
+                       listcheckpoint = new String[tab_checkpoints.length()];
                         var=0;
                     }
 
@@ -439,4 +462,6 @@ public class ControlFragment extends Fragment {
             }
         }
     }
+
+
 }

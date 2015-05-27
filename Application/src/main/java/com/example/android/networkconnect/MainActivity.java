@@ -114,14 +114,14 @@ public class MainActivity extends FragmentActivity                      {
 
     public String cookie;
 
+    private User user=new User();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         CookieManager cookieManager = new CookieManager();
         CookieHandler.setDefault(new CookieManager());
-
-        View UsbBouton = findViewById(R.id.usb_item);
 
         this.setContentView(R.layout.mainlayout);
 
@@ -134,6 +134,22 @@ public class MainActivity extends FragmentActivity                      {
         if(Read_log(this)==null)
         {
             showDialog();
+        }
+        else
+        {
+            JSONObject UserJson=Read_log(this);
+
+            try {
+                user.setUser(UserJson.getString("login"),UserJson.getString("pass"),UserJson.getString("hote"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            try {
+                new ConnectTaskHttps().execute("https://"+user.getHOTE()+".libre-informatique.fr/");
+            } catch (Exception e) {
+                Log.i(TAG,"Erreur de connection: "+e);
+                e.printStackTrace();
+            }
         }
 
     }
@@ -162,14 +178,14 @@ public class MainActivity extends FragmentActivity                      {
         catch (Exception e) {
             Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
         }
-            /*finally {
-               try {
-                      isr.close();
-                      fIn.close();
-                      } catch (IOException e) {
-                        Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
-                      }
-            } */
+           // finally {
+             //  try {
+               //       isr.close();
+                 //     fIn.close();
+                   //   } catch (IOException e) {
+                     //   Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
+                      //}
+            //}
         return json;
     }
 
@@ -270,22 +286,6 @@ public void Menu (View view)
                 showDialog();
                 return true;
 
-            case R.id.bureau:
-                try {
-           // showFragment(this.mbureauFragment,null);
-                } catch (Exception e) {
-                    Toast.makeText(getBaseContext(), "Erreur show fragment: ", Toast.LENGTH_SHORT).show();
-
-                }
-
-               return true;
-            // Clear the log view fragment.
-            case R.id.usb_item:
-        //   ControlTic controltic=new ControlTic();
-
-                //new DownloadTaskHttps().execute(apidev7);//connection e-venement
-               //new ControlTaskHttps().execute(apidev6);//Controle ticket
-                return true;
             case R.id.clear_action:
                 //Quitter le programme
                 this.finish();
@@ -297,10 +297,7 @@ public void Menu (View view)
 
 
 
-
-
-
-    private class DownloadTaskHttps extends AsyncTask<String, Void, String> {
+    private class ConnectTaskHttps extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... urls) {
@@ -335,108 +332,6 @@ public void Menu (View view)
         }
     }
 
-    /**
-     * Implementation of AsyncTask, to fetch the data in the background away from
-     * the UI thread.
-     */
-    private class ControlTaskHttps extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String...urls) {
-            try {
-
-                return String.valueOf(https_control(urls[0]));
-               // return loadFromNetwork(urls[0]);
-            } catch (IOException e) {
-                Log.i(TAG, "Erreur connection: "+e);
-                return getString(R.string.connection_error);
-            }
-        }
-
-        /**
-         * Uses the logging framework to display the output of the fetch
-         * operation in the log fragment.
-         */
-        @Override
-        protected void onPostExecute(String result) {
-            Toast.makeText(getBaseContext(), "Result: " + result, Toast.LENGTH_SHORT).show();
-
-        }
-    }
-
-
-    private String https_control (String urlString) throws  IOException {
-
-
-
-        String token="";
-        URL url = new URL(urlString);
-
-        Log.i(TAG, "Protocol: "+url.getProtocol().toString());
-
-        //if (url.getProtocol().toLowerCase().equals("https")) {
-        //trustAllHosts();
-
-        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-        conn.setReadTimeout(20000 /* milliseconds */);
-        conn.setConnectTimeout(25000 /* milliseconds */);
-        // conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-
-        conn.setChunkedStreamingMode(0);
-
-        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
-
-
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
-
-       //"https://dev3.libre-informatique.fr/tck.php/ticket/control/action?control[id]=&control[ticket_id]=2222&control[checkpoint_id]=1&control[comment]=";
-
-        //Et on y rajoute nos param�tres
-        nameValuePairs.add(new BasicNameValuePair("control[ticket_id]", "2222"));
-        nameValuePairs.add(new BasicNameValuePair("control[checkpoint_id]", "1"));
-        //nameValuePairs.add(new BasicNameValuePair("control[id]", ""));
-        //nameValuePairs.add(new BasicNameValuePair("control[comment]", ""));
-
-        OutputStream os = conn.getOutputStream();
-        BufferedWriter writer2 = new BufferedWriter(
-                new OutputStreamWriter(os, "UTF-8"));
-        writer2.write(getQuery(nameValuePairs));
-        writer2.flush();
-        //writer2.close();
-        //os.close();
-
-        conn.connect();
-
-        String headerName = null;
-
-        for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
-        {
-            Log.i (TAG,headerName+": "+conn.getHeaderField(i));
-        }
-
-
-        if (conn.getInputStream()!=null)
-        {
-            json=  convertInputStreamToJson(conn.getInputStream());
-
-            Log.i(TAG,json.toString());
-            ControlTic mControlTic=new ControlTic();
-
-            try {
-                mControlTic.setJSONOBJET(json);
-              //  Log.i(TAG, "JSON: "+mControlTic.getSUCCESS());
-            } catch (Exception e) {
-                Log.i(TAG, "erreur json: " + e);
-            }
-
-        }
-
-        return token;
-    }
-
     private String https_test (String urlString) throws  IOException {
 
 
@@ -464,36 +359,17 @@ Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
             conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
 
-        //OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-        //writer.getEncoding();
-        //writer.write("&signin[username]=antoine");
-        //writer.write("&signin[password]=android2015@");
-        //writer.write("?control[id]=");
-        //writer.write("&control[ticket_id]=2222");
-        //writer.write("&control[checkpoint_id]=1");
-        //writer.write("&control[comment]=");
 
        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
 
        //Et on y rajoute nos param�tres
-       nameValuePairs.add(new BasicNameValuePair("signin[username]", "antoine"));
-       nameValuePairs.add(new BasicNameValuePair("signin[password]", "android2015@"));
-       //nameValuePairs.add(new BasicNameValuePair("control[id]", ""));
-        //nameValuePairs.add(new BasicNameValuePair("control[ticket_id]", "2222"));
-        //nameValuePairs.add(new BasicNameValuePair("control[checkpoint_id]", "1"));
-        //nameValuePairs.add(new BasicNameValuePair("control[comment]", ""));
+       nameValuePairs.add(new BasicNameValuePair("signin[username]", user.getLOGIN()));
+       nameValuePairs.add(new BasicNameValuePair("signin[password]", user.getPASS()));
 
        OutputStream os = conn.getOutputStream();
        BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
        writer2.write(getQuery(nameValuePairs));
        writer2.flush();
-       //writer2.close();
-        //os.close();
-
-       // conn.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-        //writer.write("&signin[_csrf_token]="+CSRFTOKEN);
-        //writer.flush();
 
        conn.connect();
 
@@ -854,22 +730,6 @@ String data=null;
         }}
 
         ;
-    /**
-     * Vérification de la version de l'os
-     */
-
-    private boolean isKitkatWithStepSensor() {
-        // BEGIN_INCLUDE(iskitkatsensor)
-        // Require at least Android KitKat
-        int currentApiVersion = android.os.Build.VERSION.SDK_INT;
-        // Check that the device supports the step counter and detector sensors
-        PackageManager packageManager = this.getPackageManager();
-        //Build.VERSION_CODES.LOLLIPOP;
-        return currentApiVersion >= android.os.Build.VERSION_CODES.KITKAT
-                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
-                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
-        // END_INCLUDE(iskitkatsensor)
-    }
 
     /**
      * Create a chain of targets that will receive log data
@@ -893,12 +753,6 @@ String data=null;
         msgFilter.setNext(mLogFragment.getLogView());
     }
 
-    public void Scan_Main_fragment(View v) {
-
-        Log.i(TAG, "Bonton control MainActivity OK");
-        //CheckpointTaskHttps mCheckpointTaskHttps= (CheckpointTaskHttps) new CheckpointTaskHttps().execute(apidev8); lauchscan
-        //showFragment(this.msimpleTextFragment);
-    }
 
 
 }

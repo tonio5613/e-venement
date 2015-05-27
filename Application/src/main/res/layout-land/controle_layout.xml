@@ -28,7 +28,7 @@
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/sample_main" />
+        tools:layout="@layout/controle_layout" />
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
@@ -40,4 +40,3 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </LinearLayout>
-<!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/layout-land/sample_main.xml -->
