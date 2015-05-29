@@ -26,4 +26,6 @@
     <string name="ok">Ok</string>
     <string name="Annuler">Annuler</string>
     <string name="checkpoint_hint">Selection un point de controle</string>
+    <string name="no_checkpoint">Absence de point de controle</string>
+    <string name="info_titre">Information</string>
 </resources>

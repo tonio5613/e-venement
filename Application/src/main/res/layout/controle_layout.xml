@@ -40,13 +40,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <ProgressBar
-        style="?android:attr/progressBarStyleSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        android:visibility="gone"/>
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

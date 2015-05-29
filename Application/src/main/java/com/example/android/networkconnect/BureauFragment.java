@@ -16,6 +16,8 @@
 
 package com.example.android.networkconnect;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,6 +31,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -121,7 +126,8 @@ fa=super.getActivity();
                 // return loadFromNetwork(urls[0]);
             } catch (IOException e) {
                 Log.i(TAG, "Erreur connection: "+e);
-                return null;
+
+                return "";
             }
         }
 
@@ -134,6 +140,8 @@ fa=super.getActivity();
              //Log.i(TAG, "PostResult: "+result);
             //affichage du resultat dans un toast
 
+            try {
+                JSONObject object= new JSONObject(result);
 
                 Bundle arg = new Bundle();
                 try {
@@ -158,6 +166,24 @@ fa=super.getActivity();
                 ft.addToBackStack(null);
 
                 ft.commit();
+            } catch (JSONException e) {
+                //Log.i(TAG,"Pas de checkpoint");
+                final AlertDialog.Builder builder =new AlertDialog.Builder(getActivity());
+
+                builder.setMessage(R.string.no_checkpoint);
+                builder.setTitle(R.string.info_titre);
+                builder.setNeutralButton(R.string.ok,new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                builder.show();
+                //e.printStackTrace();
+            }
+
+
+
         }
     }
 

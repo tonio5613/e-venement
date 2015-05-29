@@ -16,7 +16,6 @@
 
 package com.example.android.networkconnect;
 
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -48,11 +47,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import static java.util.Collections.*;
 
 /**
  * Simple fragment containing only a TextView. Used by TextPagerAdapter to create
@@ -64,14 +66,6 @@ public class ControlFragment extends Fragment {
     String mText;
     // Contains a resource ID for the text that will be displayed by this fragment.
     int mTextId = -1;
-
-    String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
-            "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
-            "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
-            "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
-            "Android", "iPhone", "WindowsMobile" };
-
-
 
     // Keys which will be used to store/retrieve text passed in via setArguments.
     public static final String TEXT_KEY = "text";
@@ -88,7 +82,8 @@ public class ControlFragment extends Fragment {
     private static JSONObject json;
 
         //List des contoles
-    private final ArrayList<ControlTic> ListControl= new ArrayList<ControlTic>();
+    private final ArrayList<ControlTic> ListArrayControl= new ArrayList<ControlTic>();
+    private final ArrayList<ControlTic> ListArrayControlOrdre= new ArrayList<ControlTic>(ListArrayControl.size());
 
     private static final String TAG = "EDroide";
 
@@ -104,7 +99,7 @@ public class ControlFragment extends Fragment {
 
     Spinner spinner_checkpoint;
 
-    MySimpleArrayAdapter list_adapter;
+    ListControlArrayAdapter list_adapter;
 
 
     ListView list_controle;
@@ -149,8 +144,7 @@ public class ControlFragment extends Fragment {
 
                 return https_control(urls[0]);
             } catch (IOException e) {
-                Log.i(TAG, "Erreur connection: "+e);
-                //return getString(R.string.connection_error);
+                //Log.i(TAG, "Erreur connection: "+e);
                 ControlTic tic=null;
                 return tic;
             }
@@ -159,34 +153,35 @@ public class ControlFragment extends Fragment {
         @Override
         protected void onPostExecute(ControlTic result) {
 
-            ListControl.add(result);
+            ListArrayControl.add(result);
+            ListArrayControlOrdre.clear();
 
-            list_adapter = new MySimpleArrayAdapter(getActivity(),ListControl);
+            //Log.i(TAG,"Taille tab: "+ListArrayControl.size());
 
-            //list_adapter.setDropDownViewResource(R.layout.listcontrole);
+            if(ListArrayControl.size()>1)
+            {
+                try {
 
-            list_controle.setAdapter(list_adapter);
 
-            message=result.getMESSAGE();
+                    for (int index=(ListArrayControl.size()-1);index>=0;index--)
+                    {
+                        //Log.i(TAG,"tabordre time "+index+":"+ListArrayControl.get(index).getTIMESTAMP());
+                        ListArrayControlOrdre.add(ListArrayControl.get(index));
 
-            final TextView numtic_controle =(TextView) createdView.findViewById(R.id.numtic_controle);
-            final TextView success_controle =(TextView) createdView.findViewById(R.id.success_controle);
-            final TextView message_controle =(TextView) createdView.findViewById(R.id.message_controle);
-            final TextView errors_controle =(TextView) createdView.findViewById(R.id.errors_controle);
+                    }
 
-            numtic_controle.setText("Numéro: ");
-            success_controle.setText("Success: ");
-            message_controle.setText("Message: ");
-            errors_controle.setText("Erreurs: ");
+                    list_adapter = new ListControlArrayAdapter(getActivity(),ListArrayControlOrdre);
+                } catch (Exception e) {
+                    Log.i(TAG, "Erreur ListArray: "+e);
+                }
 
-            numtic_controle.setText("Numéro: "+result.getTICKETS_ID());
-            success_controle.setText("Success: "+result.getSUCCESS());
-            message_controle.setText("Message: " + result.getMESSAGE());
-
-            if(result.getSUCCESS()=="false") {
-                            errors_controle.setText("Détails: " + result.getDETAILS_CONTROL_ERRORS());
+            }
+            else
+            {
+                list_adapter = new ListControlArrayAdapter(getActivity(),ListArrayControl);
             }
 
+            list_controle.setAdapter(list_adapter);
         }
     }
 
@@ -283,11 +278,6 @@ public class ControlFragment extends Fragment {
 
         // Before initializing the textView, check if any arguments were provided via setArguments.
         processArguments();
-
-        final ArrayList<String> list = new ArrayList<String>();
-        for (int i = 0; i < values.length; ++i) {
-            list.add(values[i]);
-        }
 
         createdView = inflater.inflate(R.layout.controle_layout, container, false);
 

@@ -8,20 +8,25 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:padding="4dp">
-        <TextView
-            android:id="@+id/scan_title"
-            android:text="@string/e_control_text"/>
+
         <Button
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:id="@+id/lauchscan"
             android:layout_gravity="top"
-            android:maxHeight="100dp"
-            android:maxWidth="100dp"
+            android:maxHeight="150dp"
+            android:maxWidth="150dp"
             android:background="@drawable/ic_scan_launcher"
             android:clickable="true"
             android:enabled="true"
-           />
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:text="@string/e_control_text"
+            android:singleLine="false"
+            android:minHeight="120dp"
+            android:minWidth="120dp"
+            android:textSize="20dp"
+            android:textStyle="bold" />
 
     </TableRow>
     <TableRow>

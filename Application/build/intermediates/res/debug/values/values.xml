@@ -38,6 +38,7 @@
     <string name="e_control_text">e-control</string>
     <string name="eve_android_text">eve-android</string>
     <string name="fetch_text">Envoyer</string>
+    <string name="info_titre">Information</string>
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/base-strings.xml -->
     <eat-comment/>
     <string name="intro_message">
@@ -53,6 +54,7 @@
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/strings.xml -->
     <eat-comment/>
     <string name="login_text">Login</string>
+    <string name="no_checkpoint">Absence de point de controle</string>
     <string name="ok">Ok</string>
     <string name="sav_log">Se souvenir de moi</string>
     <string name="welcome_message">Bonjour, clic sur envoyer pour lancer une requete Http</string>
