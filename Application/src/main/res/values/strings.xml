@@ -26,6 +26,11 @@
     <string name="ok">Ok</string>
     <string name="Annuler">Annuler</string>
     <string name="checkpoint_hint">Selection un point de controle</string>
-    <string name="no_checkpoint">Absence de point de controle</string>
+    <string name="no_checkpoint">Absence de manifestation</string>
     <string name="info_titre">Information</string>
+    <string name="menu_titre">Menu</string>
+    <string name="url_hint">URL: http[s]://dev3.libre-informatique.fr/</string>
+    <string name="ssl_text">SSL</string>
+    <string name="ssl_titre">Certificats SSL</string>
+    <string name="ssl_check">permettre les connexions TLS non certifiées</string>
 </resources>

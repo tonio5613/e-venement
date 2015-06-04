@@ -19,6 +19,7 @@ package com.example.android.networkconnect;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.JsonReader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,6 +44,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -75,7 +77,7 @@ public class ControlFragment extends Fragment {
 
     public String [] listcheckpoint;
     public String checkpoint="Merci de sélectionner un point de controle";
-    public String num_checkpoint="";
+    public String num_checkpoint;
 
 
 
@@ -101,6 +103,7 @@ public class ControlFragment extends Fragment {
 
     ListControlArrayAdapter list_adapter;
 
+    EditText ET_scan_controle;
 
     ListView list_controle;
 
@@ -129,6 +132,16 @@ public class ControlFragment extends Fragment {
 
         return jsonobjet;
 
+    }
+
+    public static String getStringFromInputStream(InputStream stream) throws IOException
+    {
+        int n = 0;
+        char[] buffer = new char[1024 * 4];
+        InputStreamReader reader = new InputStreamReader(stream, "UTF8");
+        StringWriter writer = new StringWriter();
+        while (-1 != (n = reader.read(buffer))) writer.write(buffer, 0, n);
+        return writer.toString();
     }
 
     private class ControlTaskHttps extends AsyncTask<String, Void, ControlTic> {
@@ -182,6 +195,8 @@ public class ControlFragment extends Fragment {
             }
 
             list_controle.setAdapter(list_adapter);
+            ET_scan_controle.setText("");
+
         }
     }
 
@@ -230,15 +245,16 @@ public class ControlFragment extends Fragment {
 
         if (conn.getInputStream()!=null)
         {
-            json=  convertInputStreamToJson(conn.getInputStream());
+            JSONObject jsonObject;
 
             try {
-
-                mControlTic.setJSONOBJET(json);
-
+                jsonObject=  convertInputStreamToJson(conn.getInputStream());
+                //
+                Log.i(TAG, "JSON: "+jsonObject.toString());
+                mControlTic.setJSONOBJET(jsonObject);
                 //Log.i(TAG, "JSON: "+mControlTic.getSUCCESS());
             } catch (Exception e) {
-                Log.i(TAG, "erreur json: "+e);
+                Log.i(TAG, "erreur json controletic: "+e);
             }
 
         }
@@ -284,7 +300,7 @@ public class ControlFragment extends Fragment {
 
         list_controle=(ListView) createdView.findViewById(R.id.listControle);
 
-        final EditText scan_controle =(EditText) createdView.findViewById(R.id.code_contole);
+        ET_scan_controle =(EditText) createdView.findViewById(R.id.code_contole);
 
 
         spinner_checkpoint = (Spinner) createdView.findViewById(R.id.spinner_checkpoint);
@@ -296,11 +312,11 @@ public class ControlFragment extends Fragment {
 
         spinner_checkpoint.setAdapter(checkpoint_adapter);
 
-        scan_controle.setOnClickListener(new View.OnClickListener() {
+        ET_scan_controle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                scan_controle1 = scan_controle.getText().toString();
-                if (scan_controle1 != "") {
+                scan_controle1 = ET_scan_controle.getText().toString();
+                if (scan_controle1.length()!=0) {
                     try {
                         new ControlTaskHttps().execute(apidev6);
                     } catch (Exception e) {
@@ -309,7 +325,7 @@ public class ControlFragment extends Fragment {
                 }
                 else
                 {
-                    scan_controle.setText("");
+                    ET_scan_controle.setText("");
                 }
             }
         });
@@ -408,35 +424,38 @@ public class ControlFragment extends Fragment {
                 JSONArray tab_checkpoints=new JSONArray();
                 tab_checkpoints= checkpoints.names();
 
-
-                //Log.i(TAG, "tableau: "+tab_checkpoints.toString());
-                //listcheckpoint=data.split(",");
                     String tab[]=null;
                     int var=0;
+                    Log.i(TAG, "Longueur tab: "+tab_checkpoints.length());
                     if(tab_checkpoints.length()>1) {
 
                         listcheckpoint = new String[tab_checkpoints.length() + 1];
                         listcheckpoint[0]= "Selection d'un point de controle";
                         var = 1;
+
+                        for(int i=0;i<tab_checkpoints.length();i++)
+                        {
+
+                            //Log.i(TAG,"Tableau JSON: "+tab_checkpoints.get(i).toString());
+
+                            //Log.i(TAG,"Valeur JSON: "+checkpoints.get(tab_checkpoints.get(i).toString()));
+                            String entree=tab_checkpoints.get(i).toString()+" "+checkpoints.get(tab_checkpoints.get(i).toString());
+
+                            listcheckpoint[i+var]=entree;
+                        }
+
                     }
 
                     if(tab_checkpoints.length()<=1)
                     {
                         //spinner_checkpoint.setVisibility(View.GONE);
                        listcheckpoint = new String[tab_checkpoints.length()];
-                        var=0;
+                       num_checkpoint=tab_checkpoints.get(0).toString();
+                       Log.i(TAG, "Checkpoint: "+num_checkpoint);
+
                     }
 
-                    for(int i=0;i<tab_checkpoints.length();i++)
-                {
 
-                    //Log.i(TAG,"Tableau JSON: "+tab_checkpoints.get(i).toString());
-
-                   // Log.i(TAG,"Valeur JSON: "+checkpoints.get(tab_checkpoints.get(i).toString()));
-                    String entree=tab_checkpoints.get(i).toString()+" "+checkpoints.get(tab_checkpoints.get(i).toString());
-
-                    listcheckpoint[i+var]=entree;
-                }
 
                 } catch (Exception e) {
                 Log.i(TAG,"Erreur Tableau JSON: "+e.toString());

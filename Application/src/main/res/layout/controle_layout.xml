@@ -35,10 +35,11 @@
 
     <EditText
         android:id="@+id/code_contole"
-        android:inputType="text"
+        android:inputType="number"
         android:hint="Controle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:editable="false" />
 
     <TextView
         android:layout_width="match_parent"

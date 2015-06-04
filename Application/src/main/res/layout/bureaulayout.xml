@@ -16,17 +16,18 @@
             android:layout_gravity="top"
             android:maxHeight="150dp"
             android:maxWidth="150dp"
-            android:background="@drawable/ic_scan_launcher"
+            android:drawableTop="@drawable/ic_scan_launcher"
             android:clickable="true"
             android:enabled="true"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
             android:text="@string/e_control_text"
             android:singleLine="false"
             android:minHeight="120dp"
             android:minWidth="120dp"
             android:textSize="20dp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            />
 
     </TableRow>
     <TableRow>

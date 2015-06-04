@@ -151,7 +151,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("gauge")!=null)
                         this.TICKETS_GAUGE = JSONARRAY_TICKETS.getJSONObject(0).getString("gauge");
                 } catch (JSONException e) {
-                    this.TICKETS_GAUGE ="";
+                    this.TICKETS_GAUGE ="No";
                    // Log.i(TAG,"gauge: "+TICKETS_GAUGE);
                 }
 
@@ -159,7 +159,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation")!=null)
                       this.TICKETS_MANIFESTATION=JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation");
                 } catch (JSONException e) {
-                    this.TICKETS_MANIFESTATION="";
+                    this.TICKETS_MANIFESTATION="No";
                     e.printStackTrace();
                 }
 
@@ -167,7 +167,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation_url")!=null)
                         this.TICKETS_MANIFESTATION_URL=JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation_url");
                 } catch (JSONException e) {
-                    this.TICKETS_MANIFESTATION_URL="";
+                    this.TICKETS_MANIFESTATION_URL="No";
                     e.printStackTrace();
                 }
 
@@ -175,7 +175,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("seat")!=null)
                         this.TICKETS_SEAT=JSONARRAY_TICKETS.getJSONObject(0).getString("seat");
                 } catch (JSONException e) {
-                    this.TICKETS_SEAT="";
+                    this.TICKETS_SEAT="No";
                     e.printStackTrace();
                 }
 
@@ -183,7 +183,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("price")!=null)
                         this.TICKETS_PRICE=JSONARRAY_TICKETS.getJSONObject(0).getString("price");
                 } catch (JSONException e) {
-                    this.TICKETS_PRICE="";
+                    this.TICKETS_PRICE="No";
                     e.printStackTrace();
                 }
 
@@ -191,7 +191,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("value")!=null)
                         this.TICKETS_VALUE=JSONARRAY_TICKETS.getJSONObject(0).getString("value");
                 } catch (JSONException e) {
-                    this.TICKETS_VALUE="";
+                    this.TICKETS_VALUE="No";
                     e.printStackTrace();
                 }
 
@@ -199,7 +199,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("value_txt")!=null)
                         this.TICKETS_VALUE_TXT=JSONARRAY_TICKETS.getJSONObject(0).getString("value_txt");
                 } catch (JSONException e) {
-                    this.TICKETS_VALUE_TXT="";
+                    this.TICKETS_VALUE_TXT="No";
                     e.printStackTrace();
                 }
 
@@ -207,7 +207,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("url")!=null)
                        this.TICKETS_URL=JSONARRAY_TICKETS.getJSONObject(0).getString("url");
                 } catch (JSONException e) {
-                    this.TICKETS_URL="";
+                    this.TICKETS_URL="No";
                     e.printStackTrace();
                 }
 
@@ -215,7 +215,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getJSONArray("users").getString(0)!=null)
                       this.TICKETS_USERS=JSONARRAY_TICKETS.getJSONObject(0).getJSONArray("users").getString(0);
                 } catch (JSONException e) {
-                    this.TICKETS_USERS="";
+                    this.TICKETS_USERS="No";
                     e.printStackTrace();
                 }
 
@@ -223,7 +223,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("cancel")!=null)
                         this.TICKETS_CANCEL=JSONARRAY_TICKETS.getJSONObject(0).getString("cancel");
                 } catch (JSONException e) {
-                    this.TICKETS_CANCEL="";
+                    this.TICKETS_CANCEL="No";
                     e.printStackTrace();
                 }
             }

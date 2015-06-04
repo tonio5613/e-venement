@@ -54,9 +54,14 @@
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/strings.xml -->
     <eat-comment/>
     <string name="login_text">Login</string>
-    <string name="no_checkpoint">Absence de point de controle</string>
+    <string name="menu_titre">Menu</string>
+    <string name="no_checkpoint">Absence de manifestation</string>
     <string name="ok">Ok</string>
     <string name="sav_log">Se souvenir de moi</string>
+    <string name="ssl_check">permettre les connexions TLS non certifiées</string>
+    <string name="ssl_text">SSL</string>
+    <string name="ssl_titre">Certificats SSL</string>
+    <string name="url_hint">URL: http[s]://dev3.libre-informatique.fr/</string>
     <string name="welcome_message">Bonjour, clic sur envoyer pour lancer une requete Http</string>
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/template-styles.xml -->
     <eat-comment/>

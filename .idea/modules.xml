@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Application/Application.iml" filepath="$PROJECT_DIR$/Application/Application.iml" />
-      <module fileurl="file://$PROJECT_DIR$/E-venement.iml" filepath="$PROJECT_DIR$/E-venement.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NetworkConnect.iml" filepath="$PROJECT_DIR$/NetworkConnect.iml" />
       <module fileurl="file://$PROJECT_DIR$/libjar/jackson-core-asl-1.8.5/jackson-core-asl-1.8.5.iml" filepath="$PROJECT_DIR$/libjar/jackson-core-asl-1.8.5/jackson-core-asl-1.8.5.iml" />
       <module fileurl="file://$PROJECT_DIR$/libjar/libjar.iml" filepath="$PROJECT_DIR$/libjar/libjar.iml" />
     </modules>

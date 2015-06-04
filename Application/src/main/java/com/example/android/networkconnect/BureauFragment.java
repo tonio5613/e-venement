@@ -87,16 +87,12 @@ public class BureauFragment extends Fragment {
 fa=super.getActivity();
 
         layout = inflater.inflate(R.layout.bureaulayout, container, false);
-        //final imageButton;
-        //=(ImageButton)findViewById(R.id.lauchscan);
-
 
         final Button scan_button = (Button) layout.findViewById(R.id.lauchscan);
-        //Log.i(TAG, "numéro du bouton: "+scan_button.getId());
+
         scan_button.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Log.i(TAG, "Bonton control OK");
                 try {
                     new CheckpointTaskHttps().execute(apidev8);
                 } catch (Exception e) {
@@ -109,8 +105,6 @@ fa=super.getActivity();
             mTextView.setText(mText);
             Log.i("SimpleTextFragment", mText);
         }
-        //return inflater.inflate(R.layout.bureaulayout,container,false);
-        //return mDrawableView;
         return layout;
     }
 
@@ -167,7 +161,8 @@ fa=super.getActivity();
 
                 ft.commit();
             } catch (JSONException e) {
-                //Log.i(TAG,"Pas de checkpoint");
+
+                //Affichage message d'absence de manifestation
                 final AlertDialog.Builder builder =new AlertDialog.Builder(getActivity());
 
                 builder.setMessage(R.string.no_checkpoint);
@@ -179,11 +174,8 @@ fa=super.getActivity();
                     }
                 });
                 builder.show();
-                //e.printStackTrace();
+
             }
-
-
-
         }
     }
 
@@ -209,9 +201,6 @@ fa=super.getActivity();
 
         if (conn.getInputStream()!=null)
         {
-
-
-            //Log.i(TAG, "Checkpoint:"+json.toString());
 
             try {
                 result=  getStringFromInputStream(conn.getInputStream());

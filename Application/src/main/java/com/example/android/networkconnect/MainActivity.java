@@ -16,14 +16,15 @@
 
 package com.example.android.networkconnect;
 
-import android.app.PendingIntent;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -32,16 +33,13 @@ import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,11 +47,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.cert.CertificateException;
@@ -64,9 +60,7 @@ import java.util.List;
 import android.hardware.usb.*;
 
 import org.apache.http.NameValuePair;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.message.BasicNameValuePair;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -90,70 +84,230 @@ public class MainActivity extends FragmentActivity                      {
             "com.android.example.USB_PERMISSION";
     private static final String ACTION_USB_DEVICE_DETACHED =
             "com.android.example.USB_DEVICE_DETACHED";
-    private PendingIntent mPermissionIntent;
-    // Reference to the fragment showing events, so we can clear it with a button
-    // as necessary.
+
     private LogFragment mLogFragment;
-    public ControlFragment msimpleTextFragment;
+    public ControlFragment mcontrolFragment;
     private BureauFragment mbureauFragment;
 
     private static String JSON_CHECKPOINT="json_checkpoint";
 
-    private static JSONObject json;
-
     private static final String TAG = "EDroide";
-
-    //private JsonFactory jsonFactory = null;
-    //private JsonParser jp = null;
-
-    public String apitest1="http://cadorb.fr/dahouet/api/api.php?action=get&var=regate";
-
-    public String apidev7="https://dev3.libre-informatique.fr/"; //+parametres Marche en POST réponse 200 ok
-
-    public String apidev8="https://dev3.libre-informatique.fr/tck.php/ticket/checkpointAjax";
 
     public String cookie;
 
-    private User user=new User();
+    public User user=new User();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        CookieManager cookieManager = new CookieManager();
-        CookieHandler.setDefault(new CookieManager());
 
-        this.setContentView(R.layout.mainlayout);
+            //initialisation du CookieManager
+            CookieManager cookieManager = new CookieManager();
+            CookieHandler.setDefault(new CookieManager());
 
 
-       // mfragment_nom = getIntent().getStringExtra("fragment");
-        setupFragments();
+            this.setContentView(R.layout.mainlayout);
+            //initialisation des écrans
+            setupFragments();
+            //Affichage de l'écran du bureau principal
+            showFragment(mbureauFragment, null);
 
-        showFragment(mbureauFragment,null);
+        //Vérification si connection internet active
 
-        if(Read_log(this)==null)
-        {
-            showDialog();
+        if (isConnected() != true) {
+
+        } else {
+
+            //Lecture des informations
+            if (Read_log(this) == null) {
+                showDialog();
+            } else {
+                JSONObject UserJson = Read_log(this);
+
+                try {
+                    user.setUser(UserJson.getString("login"), UserJson.getString("pass"), UserJson.getString("hote"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    //
+                    new ConnectTaskHttps().execute("https://dev3.libre-informatique.fr/");
+                    //new ConnectTaskHttps().execute("https://" + user.getHOTE() + ".libre-informatique.fr/");
+                } catch (Exception e) {
+                    Log.i(TAG, "Erreur de connection: " + e);
+                    e.printStackTrace();
+                }
+            }
+
         }
+    }
+   /**
+    *Connection internet présente
+    **/
+    public boolean isConnected(){
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(this.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected())
+            return true;
         else
-        {
-            JSONObject UserJson=Read_log(this);
+            return false;
+    }
 
-            try {
-                user.setUser(UserJson.getString("login"),UserJson.getString("pass"),UserJson.getString("hote"));
-            } catch (JSONException e) {
-                e.printStackTrace();
+    /**
+     *Fonctions d'affichage des écrans et du menu
+     *
+     **/
+
+
+    /**
+    *Affichage de la boite de dialogue d'identification de l'utilisateur
+    **/
+
+    private void showDialog()
+    {
+        //initialisation de la boite de dialog login
+        DialogFragment mLoginDialog = new LoginDialog();
+        mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
+    }
+
+    private void SSLshowDialog()
+    {
+        final ArrayList seletedItems=new ArrayList();
+        String checkboxText= getResources().getString(R.string.ssl_check);
+        final CharSequence[] items = {checkboxText};
+        final AlertDialog.Builder builder =new AlertDialog.Builder(this);
+       // builder.setMessage(R.string.ssl_check);
+        builder.setTitle(R.string.ssl_titre);
+        builder.setMultiChoiceItems(items, null,
+                new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int indexSelected,
+                                        boolean isChecked) {
+                        if (isChecked) {
+                            // If the user checked the item, add it to the selected items
+                            seletedItems.add(indexSelected);
+                        } else if (seletedItems.contains(indexSelected)) {
+                            // Else, if the item is already in the array, remove it
+                            seletedItems.remove(Integer.valueOf(indexSelected));
+                        }
+                    }
+                });
+        builder.setNeutralButton(R.string.ok,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
             }
-            try {
-                new ConnectTaskHttps().execute("https://"+user.getHOTE()+".libre-informatique.fr/");
-            } catch (Exception e) {
-                Log.i(TAG,"Erreur de connection: "+e);
-                e.printStackTrace();
+        });
+        builder.setNegativeButton(R.string.Annuler,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
             }
+        });
+        builder.show();
+    }
+    /*
+     *Initialisation des fragments
+     **/
+    public void setupFragments() {
+        final FragmentManager fm = getSupportFragmentManager();
+
+        this.mbureauFragment = (BureauFragment) new BureauFragment();
+        if (this.mbureauFragment == null) {
+            this.mbureauFragment = new BureauFragment();
         }
+
+        this.mcontrolFragment = (ControlFragment) new ControlFragment();
+        if (this.mcontrolFragment == null) {
+            this.mcontrolFragment = new ControlFragment();
+        }
+    }
+
+    /**
+     *Changement de l'affichage des fragments
+     **/
+
+    public void showFragment(Fragment newfragment, Bundle arg) {
+        if (newfragment == null)
+            return;
+
+        final FragmentManager fm = getSupportFragmentManager();
+
+        final FragmentTransaction ft = fm.beginTransaction();
+
+        if(newfragment==mcontrolFragment) {
+            if (arg != null) {
+                if (arg.getString(JSON_CHECKPOINT) != null) {
+            newfragment.setArguments(arg);
+                }
+            }
+                else {
+            newfragment=mbureauFragment;
+                }
+        }
+
+        ft.setCustomAnimations(android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right);
+
+        ft.replace(R.id.intro_fragment, newfragment);
+
+        ft.addToBackStack(null);
+
+        ft.commit();
 
     }
 
+    @Override
+    public void onBackPressed() {
+
+        FragmentManager manager = getSupportFragmentManager();
+        if (manager.getBackStackEntryCount() > 1) {
+            showFragment(mbureauFragment, null);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+   /**
+    *Création de la barre de menu
+    **/
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+    getMenuInflater().inflate(R.menu.main, menu);
+
+        return true;
+    }
+
+   /**
+    *
+    **/
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+            case R.id.newlog:
+                //rentrer un nouveau mot de passe
+                showDialog();
+                return true;
+
+            case R.id.clear_action:
+                //Quitter le programme
+                this.finish();
+                return true;
+            case R.id.menu:
+                //Afficher l'écran de controle de billet
+                showFragment(mbureauFragment,null);
+                return true;
+            case R.id.ssl:
+                SSLshowDialog();
+                return true;
+        }
+        return false;
+    }
 
     public JSONObject Read_log(Context context)
     {
@@ -170,131 +324,14 @@ public class MainActivity extends FragmentActivity                      {
             isr = new InputStreamReader(fIn);
             isr.read(inputBuffer);
             data = new String(inputBuffer);
-            //affiche le contenu de mon fichier dans un popup surgissant
-            Toast.makeText(context, "data: "+data,Toast.LENGTH_SHORT).show();
             json=new JSONObject(data);
 
         }
         catch (Exception e) {
             Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
         }
-           // finally {
-             //  try {
-               //       isr.close();
-                 //     fIn.close();
-                   //   } catch (IOException e) {
-                     //   Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
-                      //}
-            //}
         return json;
     }
-
-
-    private void showDialog()
-    {
-        //initialisation de la boite de dialog login
-        DialogFragment mLoginDialog = new LoginDialog();
-        mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
-    }
-
-    public void setupFragments() {
-        final FragmentManager fm = getSupportFragmentManager();
-
-        this.mbureauFragment = (BureauFragment) new BureauFragment();
-        if (this.mbureauFragment == null) {
-            this.mbureauFragment = new BureauFragment();
-        }
-
-        this.msimpleTextFragment = (ControlFragment) new ControlFragment();
-        if (this.msimpleTextFragment == null) {
-            this.msimpleTextFragment = new ControlFragment();
-        }
-
-
-    }
-
-    public void showFragment(Fragment newfragment, Bundle arg) {
-        if (newfragment == null)
-            return;
-
-        final FragmentManager fm = getSupportFragmentManager();
-
-        final FragmentTransaction ft = fm.beginTransaction();
- // We can also animate the changing of fragment
-
-
-if(newfragment==msimpleTextFragment) {
-    if (arg != null) {
-        if (arg.getString(JSON_CHECKPOINT) != null) {
-           // Log.i(TAG,"show fragment: "+arg.getString(JSON_CHECKPOINT));
-            newfragment.setArguments(arg);
-        }
-    }
-    else
-    {
-        Toast.makeText(getBaseContext(), "Vous ne pouvez pas réaliser de vérification de tickets: ", Toast.LENGTH_SHORT).show();
-
-        newfragment=mbureauFragment;
-    }
-}
-        ft.setCustomAnimations(android.R.anim.slide_in_left,
-                android.R.anim.slide_out_right);
-
-        ft.replace(R.id.intro_fragment, newfragment);
-
-        ft.addToBackStack(null);
-
-        ft.commit();
-
-    }
-
-    @Override
-    public void onBackPressed() {
-
-        Log.i("ActivityInTab", "onBackPressed");
-
-        FragmentManager manager = getSupportFragmentManager();
-        if (manager.getBackStackEntryCount() > 1) {
-            showFragment(mbureauFragment, null);
-            //super.onBackPressed();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-
-
-public void Menu (View view)
-{
-    onBackPressed();
-}
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        //fechview.setHovered(true);
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            // When the user clicks FETCH, fetch the first 500 characters of
-
-            //http://cadorb.fr/dahouet/api/apphp?action=get&var=regate
-            case R.id.newlog:
-                showDialog();
-                return true;
-
-            case R.id.clear_action:
-                //Quitter le programme
-                this.finish();
-                return true;
-        }
-        return false;
-    }
-
-
 
 
     private class ConnectTaskHttps extends AsyncTask<String, Void, String> {
@@ -339,10 +376,11 @@ public void Menu (View view)
         String token="";
         URL url = new URL(urlString);
 
-Log.i(TAG, "Protocol: "+url.getProtocol().toString());
+       if (url.getProtocol().toLowerCase().equals("https")) {}
 
-       //if (url.getProtocol().toLowerCase().equals("https")) {
-            trustAllHosts();
+        if (url.getProtocol().toLowerCase().equals("http")) {}
+
+        trustAllHosts();
 
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
 
@@ -389,157 +427,10 @@ Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
        if (conn.getInputStream()!=null)
        {
-          // token =getStringFromInputStream(conn.getInputStream());
            Log.i(TAG,readIt(conn.getInputStream(),15000));
            token=readIt(conn.getInputStream(),15000);
-           Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
        }
        return token;
-    }
-
-
-
-    private String https_token (String urlString) throws  IOException {
-
-
-
-        String token=null;
-        URL url = new URL(urlString);
-
-        if (url.getProtocol().toLowerCase().equals("https")) {
-            trustAllHosts();
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-
-            conn.setReadTimeout(10000 /* milliseconds */);
-            conn.setConnectTimeout(15000 /* milliseconds */);
-            conn.setRequestMethod("POST");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-
-            conn.setChunkedStreamingMode(0);
-
-            conn.setRequestProperty("User-Agent", "e-venement-app/");
-
-            List<String> cookies1 = conn.getHeaderFields().get("Set-Cookie");
-
-            for (int g = 0; g < cookies1.size(); g++) {
-                Log.i(TAG, "Cookie_list: " + cookies1.get(g).toString());
-                Cookie cookie;
-                String[] cook = cookies1.get(g).toString().split(";");
-
-                String[] subcook = cook[0].split("=");
-                token = subcook[1];
-                Log.i(TAG, "Sub Cook: " + subcook[1]);
-
-                // subcook[1];
-            }
-        }
-        //conn.disconnect();
-        return token;
-    }
-
-    private String httpstestconnect (String urlString) throws IOException {
-        CookieManager msCookieManager = new CookieManager();
-
-        URL url = new URL(urlString);
-
-        if (url.getProtocol().toLowerCase().equals("https")) {
-            trustAllHosts();
-
-
-
-
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-            try {
-
-                String headerName = null;
-
-                for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
-                {
-                    Log.i (TAG,headerName+": "+conn.getHeaderField(i));
-                }
-
-
-
-              //  Map<String, List<String>> headerFields = conn.getHeaderFields();
-                //List<String> cookiesHeader = headerFields.get("Set-Cookie");
-
-                //if(cookiesHeader != null)
-                //{
-                  //  for (String cookie : cookiesHeader)
-                   // {
-                     //   msCookieManager.getCookieStore().add(null,HttpCookie.parse(cookie).get(0));
-
-                    //}
-                //}
-
-
-            } catch (Exception e) {
-                Log.i(TAG, "Erreur Cookie"+e);
-            }
-
-
-            conn.setReadTimeout(10000 /* milliseconds */);
-            conn.setConnectTimeout(15000 /* milliseconds */);
-            conn.setRequestMethod("POST");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-
-            conn.setChunkedStreamingMode(0);
-
-            conn.setRequestProperty("User-Agent", "e-venement-app/");
-
-            //if(msCookieManager.getCookieStore().getCookies().size() > 0)
-            //{
-          //        conn.setRequestProperty("Cookie",
-            //            TextUtils.join(",", msCookieManager.getCookieStore().getCookies()));
-            //}
-
-           // conn= (HttpsURLConnection) url.wait(); ;
-                    //(HttpsURLConnection) url.openConnection();
-
-
-
-
-            final String password="android2015@";
-
-
-            OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-            writer.getEncoding();
-            writer.write("&signin[username]=antoine");
-            writer.write("&signin[password]=android2015@");
-            //writer.write("&signin[_csrf_token]="+CSRFTOKEN);
-            writer.flush();
-//Log.i(TAG,"Writer: "+writer.toString());
-
-         //   conn.connect();
-
-
-
-
-
-
-String data=null;
-
-                //
-                if (conn.getInputStream()!=null)
-                {
-                    Log.i(TAG,readIt(conn.getInputStream(),2500));
-                     data=readIt(conn.getInputStream(),7500);
-                }
-
-          //  return conn.getResponseCode();
-            return data;
-        //return readIt(inputStream,1028);
-        }
-
-        else
-        {
-            return url.getProtocol();
-        }
-
     }
 
     private String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException
@@ -562,57 +453,6 @@ String data=null;
         return result.toString();
     }
 
-    private static JSONObject convertInputStreamToJson(InputStream inputStream) throws IOException{
-
-        BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
-        String line = "";
-        String result = "";
-
-
-
-        while((line = bufferedReader.readLine()) != null)
-            result += line;
-
-        inputStream.close();
-        JSONObject jsonobjet=null;
-
-        try {
-            jsonobjet=new JSONObject(result);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-
-
-        return jsonobjet;
-
-    }
-
-    /**
-     * Given a string representation of a URL, sets up a connection and gets
-     * an input stream.
-     *
-     * @param urlString A string representation of a URL.
-     * @return An InputStream retrieved from a successful HttpURLConnection.
-     * @throws java.io.IOException
-     */
-    private InputStream downloadUrl(String urlString) throws IOException {
-        // BEGIN_INCLUDE(get_inputstream)
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setReadTimeout(10000 /* milliseconds */);
-        conn.setConnectTimeout(15000 /* milliseconds */);
-        conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        conn.setRequestProperty("User-Agent", "e-venement-app/");
-        // Start the query
-        conn.connect();
-        InputStream stream = conn.getInputStream();
-        return stream;
-        // END_INCLUDE(get_inputstream)
-    }
-
     /**
      * Reads an InputStream and converts it to a String.
      *
@@ -624,15 +464,6 @@ String data=null;
      */
     private String readIt(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
 
-      //  BufferedReader r = new BufferedReader(new InputStreamReader(stream));
-        //StringBuilder total = new StringBuilder();
-        //String line;
-        //while ((line = r.readLine()) != null) {
-          //  total.append(line);
-        //}
-        //return total.toString();
-
-
         Reader reader = null;
         //stream.available();
         reader = new InputStreamReader(stream, "UTF-8");
@@ -640,17 +471,6 @@ String data=null;
         reader.read(buffer);
         return new String(buffer);
     }
-
-    public static String getStringFromInputStream(InputStream stream) throws IOException
-    {
-        int n = 0;
-        char[] buffer = new char[1024 * 4];
-        InputStreamReader reader = new InputStreamReader(stream, "UTF8");
-        StringWriter writer = new StringWriter();
-        while (-1 != (n = reader.read(buffer))) writer.write(buffer, 0, n);
-        return writer.toString();
-    }
-
 
     private static void trustAllHosts() {
 
@@ -689,9 +509,6 @@ String data=null;
             e.printStackTrace();
         }
     }
-
-
-
 
     /**
      * Creation d'un broadcastReceiver pour détecter la douchette en usb

@@ -22,11 +22,7 @@ public class User {
     private String HOTE;
     private JSONObject JSONLOG_SAV;
 
-    public String apidev7="https://dev3.libre-informatique.fr/"; //+parametres Marche en POST réponse 200 ok
-
-    public String apidev8="https://dev3.libre-informatique.fr/tck.php/ticket/checkpointAjax";
-    //private String urllibreinfo=".libre-informatique.fr/";     //"https://dev3.libre-informatique.fr/";
-    public String TAG="EDroide_log-erreur";
+  public String TAG="EDroide_log-erreur";
 
     private JSONObject Read_log(Context context)
     {
@@ -80,13 +76,12 @@ public class User {
                 osw.flush();
 
             } catch (Exception e) {
-              //  Toast.makeText(context, "Settings not saved", Toast.LENGTH_SHORT).show();
             } finally {
                 try {
                     osw.close();
                     fOut.close();
                 } catch (IOException e) {
-            //        Toast.makeText(context, "Settings not saved", Toast.LENGTH_SHORT).show();
+
                 }
             }
         }

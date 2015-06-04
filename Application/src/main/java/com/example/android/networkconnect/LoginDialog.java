@@ -3,12 +3,11 @@ package com.example.android.networkconnect;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -16,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.apache.http.NameValuePair;
@@ -24,7 +24,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,10 +34,9 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.SecureRandom;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -59,8 +57,8 @@ public class LoginDialog extends DialogFragment {
     private User user;
     private static final String TAG = "EDroide";
     public String cookie;
-
-    public String apidev7="https://dev3.libre-informatique.fr/"; //+parametres Marche en POST réponse 200 ok
+    private ProgressBar progressBar;
+    private int mProgressStatus = 0;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -74,8 +72,7 @@ public class LoginDialog extends DialogFragment {
         final EditText hote = (EditText) alertDialogView.findViewById(R.id.hote);
         final EditText pass =(EditText) alertDialogView.findViewById(R.id.password);
         final CheckBox checkBox_save = (CheckBox) alertDialogView.findViewById(R.id.save_log);
-
-
+        progressBar=(ProgressBar) alertDialogView.findViewById(R.id.progressbar);
 
         builder.setView(alertDialogView);
         user=new User();
@@ -107,34 +104,33 @@ public class LoginDialog extends DialogFragment {
                     public void onClick(DialogInterface dialog, int id) {
 
                         try {
-//récuperer le login + trim + minuscule
+                            //récuperer le login + trim + minuscule
                             String log = login.getText().toString();
                             log = log.trim();
                             log = log.toLowerCase();
 
 
-//récuperer le pass + trim + minuscule
+                            //récuperer le pass + trim + minuscule
                             String pas = pass.getText().toString();
                             pas = pas.trim();
                             pas = pas.toLowerCase();
 
-//récuperer l'hote + trim + minuscule
+                            //récuperer l'hote + trim + minuscule
                             String hot = hote.getText().toString();
                             hot = hot.trim();
                             hot = hot.toLowerCase();
 
+                            hot="https://dev3.libre-informatique.fr/";
                             JSONObject JSONLogin = new JSONObject();
 
-
                             user.setUser(log, pas, hot);
+                            user.savToJsonFile();
 
-                            try {
+
                                 LoginAsyncTask loginAsyncTask = (LoginAsyncTask) new LoginAsyncTask();
-                                loginAsyncTask.execute("https://"+hot+".libre-informatique.fr/");
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                Log.i(TAG, "erreur requete: "+e);
-                            }
+                                //loginAsyncTask.execute("https://"+hot+".libre-informatique.fr/");
+                            loginAsyncTask.execute(hot);
+
 
                             if (checkBox_save.isChecked()) {
                                 jsonLog = new JSONObject();
@@ -144,7 +140,6 @@ public class LoginDialog extends DialogFragment {
                                 Save_log(getActivity(), jsonLog);
                                 //signin[remember]
                             }
-
 
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -168,6 +163,11 @@ public class LoginDialog extends DialogFragment {
     private class LoginAsyncTask extends AsyncTask<String, Void, String> {
 
         @Override
+        protected void onPreExecute() {
+
+            super.onPreExecute();
+        }
+        @Override
         protected String doInBackground(String... urls) {
             try {
 
@@ -175,6 +175,15 @@ public class LoginDialog extends DialogFragment {
             } catch (IOException e) {
                 return getString(R.string.connection_error);
             }
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+
+            //progressBar.setProgress();
+            progressBar.setProgress(mProgressStatus);
+            super.onProgressUpdate(values);
+
         }
 
         /**
@@ -187,26 +196,32 @@ public class LoginDialog extends DialogFragment {
             //affichage du resultat dans un toast
             Log.i(TAG , "Postexe: "+result);
 
+            if (result.contains("unknownHostException"))
+            {
+
+            }
 
         }
     }
 
     private String login_control (String urlString) throws  IOException {
-
-
-
+        int count;
         String token="";
         URL url = new URL(urlString);
 
         Log.i(TAG, "Protocol: "+url.getProtocol().toString());
 
         //if (url.getProtocol().toLowerCase().equals("https")) {
-        trustAllHosts();
+        SSLHosts();
+            //trustAllHosts();
 
-        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+        HttpsURLConnection conn = null;
+        try {
+            conn = (HttpsURLConnection) url.openConnection();
 
-        conn.setReadTimeout(20000 /* milliseconds */);
-        conn.setConnectTimeout(25000 /* milliseconds */);
+
+        conn.setReadTimeout(2000 /* milliseconds */);
+        conn.setConnectTimeout(2500 /* milliseconds */);
         // conn.setRequestMethod("GET");
         conn.setDoInput(true);
         conn.setDoOutput(true);
@@ -232,7 +247,7 @@ public class LoginDialog extends DialogFragment {
         conn.connect();
 
         String headerName = null;
-
+        long total = 0;
         for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
         {
             Log.i (TAG,headerName+": "+conn.getHeaderField(i));
@@ -247,9 +262,28 @@ public class LoginDialog extends DialogFragment {
 
         if (conn.getInputStream()!=null)
         {
+            
+            //while ((count = conn.getInputStream().read()) != -1) {
+              //  mProgressStatus += count;
+            //    progressBar.setProgress(mProgressStatus);
+                //mProgressStatus(""+(int)((total*100)/conn.getInputStream().available()));
+
+            //}
+
             Log.i(TAG,readIt(conn.getInputStream(),15000));
             token=conn.getHeaderField(1);
             Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
+        }
+
+        }
+        catch (UnknownHostException unknownHostException) {
+            Log.i(TAG, "erreur unknownHostException:"+unknownHostException);
+            return "erreur unknownHostException";
+        }
+
+        catch (IOException e) {
+            Log.i(TAG, "erreur id:"+e);
+            return "erreur connection";
         }
         return token;
     }
@@ -358,6 +392,43 @@ public class LoginDialog extends DialogFragment {
             } */
         return json;
     }
+
+    private static void SSLHosts() {
+
+        X509TrustManager easyTrustManager=new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) {
+
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) {
+
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        };
+
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[]{easyTrustManager};
+
+        // Install the all-trusting trust manager
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            //Log.i(TAG,"TrustManager: "+sc.getProtocol());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.i(TAG, "Erreur trustManager: "+e);
+        }
+    }
+
     private static void trustAllHosts() {
 
         X509TrustManager easyTrustManager = new X509TrustManager() {

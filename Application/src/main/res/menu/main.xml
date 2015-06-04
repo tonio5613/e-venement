@@ -16,21 +16,28 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <item android:id="@+id/menu"
+        android:showAsAction="ifRoom|withText"
+        android:title="@string/menu_titre" />
     <item android:id="@+id/clear_action"
         android:showAsAction="ifRoom|withText"
         android:title="@string/clear_text" />
-  <item android:id="@+id/bureau"
+    <item android:id="@+id/bureau"
         android:title="@string/login_text"
         android:showAsAction="ifRoom"
         android:visible="true"
         android:icon="@drawable/ic_action_navigation_menu">
-
     <menu>
           <item
           android:id="@+id/newlog"
           android:title="@string/login_text"
           android:showAsAction="ifRoom|withText"
           />
+        <item
+            android:id="@+id/ssl"
+            android:title="@string/ssl_text"
+            android:showAsAction="ifRoom|withText"
+            />
           </menu>
 
 
