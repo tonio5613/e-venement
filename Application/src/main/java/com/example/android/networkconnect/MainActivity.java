@@ -50,6 +50,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.cert.CertificateException;
@@ -88,7 +89,7 @@ public class MainActivity extends FragmentActivity                      {
     private LogFragment mLogFragment;
     public ControlFragment mcontrolFragment;
     private BureauFragment mbureauFragment;
-
+    public boolean UseNoCertifTLS=true;
     private static String JSON_CHECKPOINT="json_checkpoint";
 
     private static final String TAG = "EDroide";
@@ -177,7 +178,6 @@ public class MainActivity extends FragmentActivity                      {
         String checkboxText= getResources().getString(R.string.ssl_check);
         final CharSequence[] items = {checkboxText};
         final AlertDialog.Builder builder =new AlertDialog.Builder(this);
-       // builder.setMessage(R.string.ssl_check);
         builder.setTitle(R.string.ssl_titre);
         builder.setMultiChoiceItems(items, null,
                 new DialogInterface.OnMultiChoiceClickListener() {
@@ -187,7 +187,10 @@ public class MainActivity extends FragmentActivity                      {
                         if (isChecked) {
                             // If the user checked the item, add it to the selected items
                             seletedItems.add(indexSelected);
+                            UseNoCertifTLS=true;
+
                         } else if (seletedItems.contains(indexSelected)) {
+                            UseNoCertifTLS=false;
                             // Else, if the item is already in the array, remove it
                             seletedItems.remove(Integer.valueOf(indexSelected));
                         }
@@ -338,14 +341,28 @@ public class MainActivity extends FragmentActivity                      {
 
         @Override
         protected String doInBackground(String... urls) {
-            try {
+            if (UseNoCertifTLS!=false) {
+                try {
 
-                return https_test(urls[0]);
+                    return https_test(urls[0]);
 
-                // return loadFromNetwork(urls[0]);
-            } catch (IOException e) {
-                Log.i(TAG, "Erreur connection: "+e);
-                return getString(R.string.connection_error);
+                    // return loadFromNetwork(urls[0]);
+                } catch (IOException e) {
+                    Log.i(TAG, "Erreur connection: " + e);
+                    return getString(R.string.connection_error);
+                }
+            }
+            else
+            {
+                try {
+
+                    return http_test(urls[0]);
+
+                    // return loadFromNetwork(urls[0]);
+                } catch (IOException e) {
+                    Log.i(TAG, "Erreur connection: " + e);
+                    return getString(R.string.connection_error);
+                }
             }
         }
 
@@ -369,6 +386,60 @@ public class MainActivity extends FragmentActivity                      {
         }
     }
 
+    private String http_test (String urlString) throws  IOException {
+
+        String token="";
+        URL url = new URL(urlString);
+
+        trustAllHosts();
+
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        conn.setReadTimeout(20000 /* milliseconds */);
+        conn.setConnectTimeout(25000 /* milliseconds */);
+        // conn.setRequestMethod("GET");
+        conn.setDoInput(true);
+        conn.setDoOutput(true);
+
+        conn.setChunkedStreamingMode(0);
+
+        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
+
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
+
+        //Et on y rajoute nos param�tres
+        nameValuePairs.add(new BasicNameValuePair("signin[username]", user.getLOGIN()));
+        nameValuePairs.add(new BasicNameValuePair("signin[password]", user.getPASS()));
+
+        OutputStream os = conn.getOutputStream();
+        BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+        writer2.write(getQuery(nameValuePairs));
+        writer2.flush();
+
+        conn.connect();
+
+        String headerName = null;
+
+        for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
+        {
+            Log.i (TAG,headerName+": "+conn.getHeaderField(i));
+        }
+
+        int responseCode = conn.getResponseCode();
+
+        if(responseCode == conn.HTTP_OK) {
+            final String COOKIES_HEADER = "Set-Cookie";
+            cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+        }
+
+        if (conn.getInputStream()!=null)
+        {
+            Log.i(TAG,readIt(conn.getInputStream(),15000));
+            token=readIt(conn.getInputStream(),15000);
+        }
+        return token;
+    }
+
     private String https_test (String urlString) throws  IOException {
 
 
@@ -383,9 +454,6 @@ public class MainActivity extends FragmentActivity                      {
         trustAllHosts();
 
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-
-
 
             conn.setReadTimeout(20000 /* milliseconds */);
             conn.setConnectTimeout(25000 /* milliseconds */);

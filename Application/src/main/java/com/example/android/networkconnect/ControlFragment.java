@@ -79,8 +79,6 @@ public class ControlFragment extends Fragment {
     public String checkpoint="Merci de sélectionner un point de controle";
     public String num_checkpoint;
 
-
-
     private static JSONObject json;
 
         //List des contoles
@@ -169,25 +167,19 @@ public class ControlFragment extends Fragment {
             ListArrayControl.add(result);
             ListArrayControlOrdre.clear();
 
-            //Log.i(TAG,"Taille tab: "+ListArrayControl.size());
-
             if(ListArrayControl.size()>1)
             {
                 try {
 
-
                     for (int index=(ListArrayControl.size()-1);index>=0;index--)
                     {
-                        //Log.i(TAG,"tabordre time "+index+":"+ListArrayControl.get(index).getTIMESTAMP());
                         ListArrayControlOrdre.add(ListArrayControl.get(index));
-
                     }
 
                     list_adapter = new ListControlArrayAdapter(getActivity(),ListArrayControlOrdre);
                 } catch (Exception e) {
                     Log.i(TAG, "Erreur ListArray: "+e);
                 }
-
             }
             else
             {

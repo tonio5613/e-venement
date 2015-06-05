@@ -34,6 +34,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
@@ -169,14 +170,25 @@ public class LoginDialog extends DialogFragment {
         }
         @Override
         protected String doInBackground(String... urls) {
-            try {
+            if (urls[0].contains("https")) {
+                try {
 
-                return login_control(urls[0]);
-            } catch (IOException e) {
-                return getString(R.string.connection_error);
+                    return login_control(urls[0]);
+                } catch (IOException e) {
+                    return getString(R.string.connection_error);
+                }
+            }
+
+            else
+            {
+                try {
+
+                    return login_control_http(urls[0]);
+                } catch (IOException e) {
+                    return getString(R.string.connection_error);
+                }
             }
         }
-
         @Override
         protected void onProgressUpdate(Void... values) {
 
@@ -204,7 +216,11 @@ public class LoginDialog extends DialogFragment {
         }
     }
 
-    private String login_control (String urlString) throws  IOException {
+   /**
+    *Vérification de l'utilisateur, protocol http
+    **/
+
+    private String login_control_http (String urlString) throws  IOException {
         int count;
         String token="";
         URL url = new URL(urlString);
@@ -213,7 +229,93 @@ public class LoginDialog extends DialogFragment {
 
         //if (url.getProtocol().toLowerCase().equals("https")) {
         SSLHosts();
-            //trustAllHosts();
+        //trustAllHosts();
+
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) url.openConnection();
+
+
+            conn.setReadTimeout(2000 /* milliseconds */);
+            conn.setConnectTimeout(2500 /* milliseconds */);
+            // conn.setRequestMethod("GET");
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+            conn.setChunkedStreamingMode(0);
+
+            conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
+
+            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
+
+            //Et on y rajoute nos param�tres
+
+            nameValuePairs.add(new BasicNameValuePair("signin[username]", user.getLOGIN()));
+            nameValuePairs.add(new BasicNameValuePair("signin[password]", user.getPASS()));
+
+            OutputStream os = conn.getOutputStream();
+            BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+            writer2.write(getQuery(nameValuePairs));
+            writer2.flush();
+            //writer2.close();
+            //os.close();
+
+            conn.connect();
+
+            String headerName = null;
+            long total = 0;
+            for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
+            {
+                Log.i (TAG,headerName+": "+conn.getHeaderField(i));
+            }
+
+            int responseCode = conn.getResponseCode();
+
+            if(responseCode == conn.HTTP_OK) {
+                final String COOKIES_HEADER = "Set-Cookie";
+                cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+            }
+
+            if (conn.getInputStream()!=null)
+            {
+
+                //while ((count = conn.getInputStream().read()) != -1) {
+                //  mProgressStatus += count;
+                //    progressBar.setProgress(mProgressStatus);
+                //mProgressStatus(""+(int)((total*100)/conn.getInputStream().available()));
+
+                //}
+
+                Log.i(TAG,readIt(conn.getInputStream(),15000));
+                token=conn.getHeaderField(1);
+                Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
+            }
+
+        }
+        catch (UnknownHostException unknownHostException) {
+            Log.i(TAG, "erreur unknownHostException:"+unknownHostException);
+            return "erreur unknownHostException";
+        }
+
+        catch (IOException e) {
+            Log.i(TAG, "erreur id:"+e);
+            return "erreur connection";
+        }
+        return token;
+    }
+
+    /**
+     *Vérification de l'utilisateur, protocol https
+     **/
+
+    private String login_control (String urlString) throws  IOException {
+        int count;
+        String token="";
+        URL url = new URL(urlString);
+
+        Log.i(TAG, "Protocol: "+url.getProtocol().toString());
+
+        SSLHosts();
 
         HttpsURLConnection conn = null;
         try {
@@ -262,13 +364,6 @@ public class LoginDialog extends DialogFragment {
 
         if (conn.getInputStream()!=null)
         {
-            
-            //while ((count = conn.getInputStream().read()) != -1) {
-              //  mProgressStatus += count;
-            //    progressBar.setProgress(mProgressStatus);
-                //mProgressStatus(""+(int)((total*100)/conn.getInputStream().available()));
-
-            //}
 
             Log.i(TAG,readIt(conn.getInputStream(),15000));
             token=conn.getHeaderField(1);
