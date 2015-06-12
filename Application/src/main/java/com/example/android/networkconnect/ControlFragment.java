@@ -16,6 +16,7 @@
 
 package com.example.android.networkconnect;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -30,6 +31,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -39,6 +41,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -58,18 +61,11 @@ import javax.net.ssl.HttpsURLConnection;
 
 import static java.util.Collections.*;
 
-/**
- * Simple fragment containing only a TextView. Used by TextPagerAdapter to create
- * tutorial-style pages for apps.
- */
 public class ControlFragment extends Fragment {
 
-    // Contains the text that will be displayed by this Fragment
     String mText;
-    // Contains a resource ID for the text that will be displayed by this fragment.
     int mTextId = -1;
 
-    // Keys which will be used to store/retrieve text passed in via setArguments.
     public static final String TEXT_KEY = "text";
     public static final String TEXT_ID_KEY = "text_id";
     public static final String JSON_CHECKPOINT="json_checkpoint";
@@ -87,13 +83,9 @@ public class ControlFragment extends Fragment {
 
     private static final String TAG = "EDroide";
 
-    public String apidev6="https://dev3.libre-informatique.fr/tck.php/ticket/control/action";
-
     public String scan_controle1="";
 
     View createdView;
-
-    private TextView mTextView;
 
     private String message="";
 
@@ -104,6 +96,8 @@ public class ControlFragment extends Fragment {
     EditText ET_scan_controle;
 
     ListView list_controle;
+
+    private String URL="";
 
 
     public ControlFragment() {
@@ -140,6 +134,44 @@ public class ControlFragment extends Fragment {
         StringWriter writer = new StringWriter();
         while (-1 != (n = reader.read(buffer))) writer.write(buffer, 0, n);
         return writer.toString();
+    }
+
+    private String url ()
+    {
+        String url="";
+        JSONObject object =Read_log(getActivity());
+        try {
+            // https://dev3.libre-informatique.fr/tck.php/ticket/control/action
+            url=object.getString("hote");
+            url=url+"/tck.php/ticket/control/action";
+        } catch (JSONException e) {
+            Log.i(TAG, "Absence d'adresse http");
+        }
+        return url;
+    }
+
+    public JSONObject Read_log(Context context)
+    {
+        FileInputStream fIn = null;
+        InputStreamReader isr = null;
+
+        char[] inputBuffer = new char[255];
+        String data = null;
+
+        JSONObject json=null;
+
+        try{
+            fIn = context.openFileInput("settings.txt");
+            isr = new InputStreamReader(fIn);
+            isr.read(inputBuffer);
+            data = new String(inputBuffer);
+            json=new JSONObject(data);
+            Log.i(TAG, "JSON: "+json.toString());
+        }
+        catch (Exception e) {
+            Toast.makeText(context, "Settings not read", Toast.LENGTH_SHORT).show();
+        }
+        return json;
     }
 
     private class ControlTaskHttps extends AsyncTask<String, Void, ControlTic> {
@@ -244,7 +276,7 @@ public class ControlFragment extends Fragment {
                 //
                 Log.i(TAG, "JSON: "+jsonObject.toString());
                 mControlTic.setJSONOBJET(jsonObject);
-                //Log.i(TAG, "JSON: "+mControlTic.getSUCCESS());
+
             } catch (Exception e) {
                 Log.i(TAG, "erreur json controletic: "+e);
             }
@@ -310,7 +342,8 @@ public class ControlFragment extends Fragment {
                 scan_controle1 = ET_scan_controle.getText().toString();
                 if (scan_controle1.length()!=0) {
                     try {
-                        new ControlTaskHttps().execute(apidev6);
+                        URL =url();
+                        new ControlTaskHttps().execute(URL);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -375,20 +408,6 @@ public class ControlFragment extends Fragment {
         return createdView;
     }
 
-
-
-    public TextView getTextView() {
-        return mTextView;
-    }
-
-    /**
-     * Changes the text for this TextView, according to the resource ID provided.
-     * @param stringId A resource ID representing the text content for this Fragment's TextView.
-     */
-    public void setText(int stringId) {
-        getTextView().setText(getActivity().getString(stringId));
-    }
-
     /**
      * Processes the arguments passed into this Fragment via setArguments method.
      * Currently the method only looks for text or a textID, nothing else.
@@ -428,9 +447,6 @@ public class ControlFragment extends Fragment {
                         for(int i=0;i<tab_checkpoints.length();i++)
                         {
 
-                            //Log.i(TAG,"Tableau JSON: "+tab_checkpoints.get(i).toString());
-
-                            //Log.i(TAG,"Valeur JSON: "+checkpoints.get(tab_checkpoints.get(i).toString()));
                             String entree=tab_checkpoints.get(i).toString()+" "+checkpoints.get(tab_checkpoints.get(i).toString());
 
                             listcheckpoint[i+var]=entree;

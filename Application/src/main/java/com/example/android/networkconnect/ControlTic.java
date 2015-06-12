@@ -15,19 +15,11 @@ public class ControlTic {
 
     JSONObject JSONOBJET;
     JSONArray JSONARRAY_TICKETS;
-
-
     String SUCCESS;
     String MESSAGE;
     String TIMESTAMP;
-
-    //  {
-    //    "success": false,
-    //      "message": "Contrôle: échec !",
-    //     "timestamp": "27/04/2015 21:52:25",
-
     String TICKETS_ID;
-    String TICKETS_GAUGE;
+    String TICKETS_JAUGE;
     String TICKETS_MANIFESTATION;
     String TICKETS_MANIFESTATION_URL;
     String TICKETS_SEAT;
@@ -37,64 +29,17 @@ public class ControlTic {
     String TICKETS_URL;
     String TICKETS_USERS;
     String TICKETS_CANCEL;
-
-    //   "tickets": [
-    //{
-    //  "id": 4090,
-    //    "gauge": "Cat 1 - Parterre",
-    //  "manifestation": "Summit e-venement 2015 @ lun. 27 avr. 2015 22:00",
-    // "manifestation_url": "https://test.libre-informatique.fr/event.php/manifestation/1.html",
-    //"seat": "C60",
-//                "price": "TPLEIN",
-//                "value": "50.000",
-//                "value_txt": "50,00 €",
-//                "url": "https://test.libre-informatique.fr/tck.php/ticket/4090",
-//                "users": [
-//            "vel"
-//            ],
-//            "cancel": null
-//        }
-//        ],
     JSONObject DETAILS;
     JSONObject CONTROL;
-
     String DETAILS_CONTROL_COMMENT;
-
     JSONArray ERRORS_ARRAY;
     String DETAILS_CONTROL_ERRORS;
-
-//        "details": {
-//        "control": {
-//            "comment": null,
-//                    "errors": [
-//            "Une erreur est survenue lors du contrôle de votre billet #4090."
-//            ]
-//        },
-
     JSONArray CONTACTS;
-    JSONObject CONTACT;
-    //String CONTACTS;
     int CONTACTS_ID;
     String CONTACTS_CONTACT_NAME;
     String CONTACTS_CONTACT_COMMENT;
     String CONTACTS_CONTACT_URL;
     String CONTACTS_CONTACT_FLASH;
-
-//        "contacts": {
-//            "4090": {
-//                "contact": {
-//                    "id": 766,
-//                            "name": "Dieudonné Delphine",
-//                            "comment": null,
-//                            "url": "https://test.libre-informatique.fr/rp.php/contact/766/edit",
-//                            "flash": null
-//                }
-//            }
-//        }
-//    }
-//    }
-
-
 
     public JSONObject getJSONOBJET() {
         return JSONOBJET;
@@ -111,8 +56,6 @@ public class ControlTic {
         this.JSONOBJET = JSONOBJET;
 
         try {
-            //gestion pour un échec
-
 
             if (JSONOBJET.getString("success")!=null)
                 this.SUCCESS=JSONOBJET.getString("success");
@@ -123,24 +66,6 @@ public class ControlTic {
             if(JSONOBJET.getString("timestamp")!=null)
             this.TIMESTAMP=JSONOBJET.getString("timestamp");
 
-            //   "tickets": [
-            //{
-            //  "id": 4090,
-            //    "gauge": "Cat 1 - Parterre",
-            //  "manifestation": "Summit e-venement 2015 @ lun. 27 avr. 2015 22:00",
-            // "manifestation_url": "https://test.libre-informatique.fr/event.php/manifestation/1.html",
-            //"seat": "C60",
-//                "price": "TPLEIN",
-//                "value": "50.000",
-//                "value_txt": "50,00 €",
-//                "url": "https://test.libre-informatique.fr/tck.php/ticket/4090",
-//                "users": [
-//            "vel"
-//            ],
-//            "cancel": null
-//        }
-//        ],
-
             if(JSONOBJET.getJSONArray("tickets")!=null) {
                 this.JSONARRAY_TICKETS = JSONOBJET.getJSONArray("tickets");
 
@@ -149,17 +74,16 @@ public class ControlTic {
 
                 try {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("gauge")!=null)
-                        this.TICKETS_GAUGE = JSONARRAY_TICKETS.getJSONObject(0).getString("gauge");
+                        this.TICKETS_JAUGE = JSONARRAY_TICKETS.getJSONObject(0).getString("gauge");
                 } catch (JSONException e) {
-                    this.TICKETS_GAUGE ="No";
-                   // Log.i(TAG,"gauge: "+TICKETS_GAUGE);
+                    this.TICKETS_JAUGE ="";
                 }
 
                 try {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation")!=null)
                       this.TICKETS_MANIFESTATION=JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation");
                 } catch (JSONException e) {
-                    this.TICKETS_MANIFESTATION="No";
+                    this.TICKETS_MANIFESTATION="";
                     e.printStackTrace();
                 }
 
@@ -167,7 +91,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation_url")!=null)
                         this.TICKETS_MANIFESTATION_URL=JSONARRAY_TICKETS.getJSONObject(0).getString("manifestation_url");
                 } catch (JSONException e) {
-                    this.TICKETS_MANIFESTATION_URL="No";
+                    this.TICKETS_MANIFESTATION_URL="";
                     e.printStackTrace();
                 }
 
@@ -175,7 +99,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("seat")!=null)
                         this.TICKETS_SEAT=JSONARRAY_TICKETS.getJSONObject(0).getString("seat");
                 } catch (JSONException e) {
-                    this.TICKETS_SEAT="No";
+                    this.TICKETS_SEAT="";
                     e.printStackTrace();
                 }
 
@@ -183,7 +107,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("price")!=null)
                         this.TICKETS_PRICE=JSONARRAY_TICKETS.getJSONObject(0).getString("price");
                 } catch (JSONException e) {
-                    this.TICKETS_PRICE="No";
+                    this.TICKETS_PRICE="";
                     e.printStackTrace();
                 }
 
@@ -191,7 +115,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("value")!=null)
                         this.TICKETS_VALUE=JSONARRAY_TICKETS.getJSONObject(0).getString("value");
                 } catch (JSONException e) {
-                    this.TICKETS_VALUE="No";
+                    this.TICKETS_VALUE="";
                     e.printStackTrace();
                 }
 
@@ -199,7 +123,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("value_txt")!=null)
                         this.TICKETS_VALUE_TXT=JSONARRAY_TICKETS.getJSONObject(0).getString("value_txt");
                 } catch (JSONException e) {
-                    this.TICKETS_VALUE_TXT="No";
+                    this.TICKETS_VALUE_TXT="";
                     e.printStackTrace();
                 }
 
@@ -207,7 +131,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("url")!=null)
                        this.TICKETS_URL=JSONARRAY_TICKETS.getJSONObject(0).getString("url");
                 } catch (JSONException e) {
-                    this.TICKETS_URL="No";
+                    this.TICKETS_URL="";
                     e.printStackTrace();
                 }
 
@@ -215,7 +139,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getJSONArray("users").getString(0)!=null)
                       this.TICKETS_USERS=JSONARRAY_TICKETS.getJSONObject(0).getJSONArray("users").getString(0);
                 } catch (JSONException e) {
-                    this.TICKETS_USERS="No";
+                    this.TICKETS_USERS="";
                     e.printStackTrace();
                 }
 
@@ -223,7 +147,7 @@ public class ControlTic {
                     if(JSONARRAY_TICKETS.getJSONObject(0).getString("cancel")!=null)
                         this.TICKETS_CANCEL=JSONARRAY_TICKETS.getJSONObject(0).getString("cancel");
                 } catch (JSONException e) {
-                    this.TICKETS_CANCEL="No";
+                    this.TICKETS_CANCEL="";
                     e.printStackTrace();
                 }
             }
@@ -244,8 +168,7 @@ public class ControlTic {
                                     try {
                                         if(ERRORS_ARRAY.getString(0)!=null) {
 
-                                            //this.DETAILS_CONTROL_ERRORS = JSONOBJET.getJSONObject("details").getJSONObject("control").getJSONArray("errors").getString(0);
-                                            this.DETAILS_CONTROL_ERRORS =ERRORS_ARRAY.getString(0);
+                                        this.DETAILS_CONTROL_ERRORS =ERRORS_ARRAY.getString(0);
                                         }
                                     } catch (JSONException e) {
                                         this.DETAILS_CONTROL_ERRORS="";
@@ -268,21 +191,11 @@ public class ControlTic {
                 this.DETAILS =null;
             }
 
-            //DETAILS_CONTROL_ERRORS=JSONOBJET.get("details").toString();
             this.DETAILS=JSONOBJET.getJSONObject("details");
-
-
 
             this.CONTROL=DETAILS.getJSONObject("control");
 
             this.DETAILS_CONTROL_COMMENT=CONTROL.getString("comment");
-
-            //this.ERRORS_ARRAY=CONTROL.getJSONArray("errors");
-            // this.DETAILS_CONTROL_ERRORS=ERRORS_ARRAY.get(0).toString();
-            //this.DETAILS_CONTROL_ERRORS=CONTROL.getString("errors").toString();
-
-            //this.CONTACTS=DETAILS.getJSONObject("contacts");
-
 
             try {
                 if(DETAILS.getJSONArray("contacts")!=null);
@@ -296,7 +209,6 @@ public class ControlTic {
                 e.printStackTrace();
             }
 
-            //this.CONTACTS.getJSONObject(String.valueOf(TICKETS_ID)).getJSONObject("contact");
 
 
         } catch (JSONException e) {
@@ -305,50 +217,6 @@ public class ControlTic {
         }
 
     }
-
-
-    //ticket valide
-
-//    {
-//        "timestamp": "19/05/2015 17:28:52",
-//            "message": "Contrôle: ok.",
-//            "details": {
-//        "control": {
-//            "comment": null,
-//                    "errors": []
-//        },
-//        "contacts": {
-//            "22841": {
-//                "contact": {
-//                    "id": null,
-//                            "flash": null,
-//                            "comment": null,
-//                            "url": "https://dev3.libre-informatique.fr/rp.php/contact//edit",
-//                            "name": " "
-//                }
-//            }
-//        }
-//    },
-//        "success": true,
-//            "tickets": [
-//        {
-//            "id": 22841,
-//                "users": [
-//            "antoine"
-//            ],
-//                "price": "AssTP",
-//                "seat": null,
-//                "value_txt": "0,00 €",
-//                "value": "0.000",
-//                "manifestation_url": "https://dev3.libre-informatique.fr/event.php/manifestation/79",
-//                "gauge": "Fauteuils",
-//                "cancel": "https://dev3.libre-informatique.fr/tck.php/ticket/22841/controlCancel",
-//                "url": "https://dev3.libre-informatique.fr/tck.php/ticket/22841",
-    //            "manifestation": "Android @ mar. 19 mai 2015 18:00"
-  //      }
-      //  ]
-    //}
-
 
     public String getSUCCESS() {
         return SUCCESS;
@@ -383,11 +251,11 @@ public class ControlTic {
     }
 
     public String getTICKETS_GAUGE() {
-        return TICKETS_GAUGE;
+        return TICKETS_JAUGE;
     }
 
     public void setTICKETS_GAUGE(String TICKETS_GAUGE) {
-        this.TICKETS_GAUGE = TICKETS_GAUGE;
+        this.TICKETS_JAUGE = TICKETS_GAUGE;
     }
 
     public String getTICKETS_MANIFESTATION() {

@@ -17,6 +17,7 @@
 package com.example.android.networkconnect;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,8 +32,13 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.android.common.logger.LogFragment;
@@ -41,27 +47,33 @@ import com.example.android.common.logger.MessageOnlyLogFilter;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.hardware.usb.*;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -98,15 +110,15 @@ public class MainActivity extends FragmentActivity                      {
 
     public User user=new User();
 
+    LoginDialog mLoginDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
             //initialisation du CookieManager
             CookieManager cookieManager = new CookieManager();
             CookieHandler.setDefault(new CookieManager());
-
 
             this.setContentView(R.layout.mainlayout);
             //initialisation des écrans
@@ -114,16 +126,30 @@ public class MainActivity extends FragmentActivity                      {
             //Affichage de l'écran du bureau principal
             showFragment(mbureauFragment, null);
 
-        //Vérification si connection internet active
+            //Vérification si connection internet active
 
         if (isConnected() != true) {
-
+            //Affichage d'une erreur de connection
+            Show_Connection_error_Dialog(null);
         } else {
 
             //Lecture des informations
             if (Read_log(this) == null) {
-                showDialog();
-            } else {
+                //Affichage de la fenêtre d'identification
+
+                mLoginDialog = new LoginDialog();
+                mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
+
+                //while (mLoginDialog.isMenuVisible()) {
+                    //try {
+                //        Log.i(TAG, "Retour Json: " + mLoginDialog.getJsonLog().toString());
+                  //  } catch (Exception e) {
+                    //    Log.i(TAG, "erreur de retour! " + e);
+                    //}
+               // }
+            }
+            //Utilisation du fichier utilisateur
+             else {
                 JSONObject UserJson = Read_log(this);
 
                 try {
@@ -132,10 +158,10 @@ public class MainActivity extends FragmentActivity                      {
                     e.printStackTrace();
                 }
                 try {
-                    //
-                    new ConnectTaskHttps().execute("https://dev3.libre-informatique.fr/");
-                    //new ConnectTaskHttps().execute("https://" + user.getHOTE() + ".libre-informatique.fr/");
+
+                    new ConnectTaskHttp().execute(UserJson.getString("hote"));
                 } catch (Exception e) {
+                    //Affichage dans le Logcat
                     Log.i(TAG, "Erreur de connection: " + e);
                     e.printStackTrace();
                 }
@@ -143,20 +169,23 @@ public class MainActivity extends FragmentActivity                      {
 
         }
     }
+
    /**
-    *Connection internet présente
+    *Vérification connection internet présente
     **/
+
     public boolean isConnected(){
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(this.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected())
             return true;
-        else
+        else {
             return false;
+        }
     }
 
     /**
-     *Fonctions d'affichage des écrans et du menu
+     *Fonctions d'affichages des écrans et du menu
      *
      **/
 
@@ -167,24 +196,60 @@ public class MainActivity extends FragmentActivity                      {
 
     private void showDialog()
     {
-        //initialisation de la boite de dialog login
-        DialogFragment mLoginDialog = new LoginDialog();
-        mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
+            mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
     }
 
+    /**
+     *Fonction d'affichage d'erreurs
+     **/
+    public void Show_Connection_error_Dialog(String erreur)
+    {
+        String messageText= getResources().getString(R.string.connection_error_txt);
+
+        if(erreur!=null)
+        {
+            messageText=erreur;
+        }
+        final ArrayList seletedItems=new ArrayList();
+        //final CharSequence[] items = {checkboxText};
+        final boolean[] checker={true};
+        final AlertDialog.Builder builder =new AlertDialog.Builder(this);
+        builder.setTitle(R.string.connection_error);
+        builder.setMessage(messageText);
+        builder.setNeutralButton(R.string.Continuer,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.setNegativeButton(R.string.Quitter,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            finish();
+            }
+        });
+        builder.show();
+    }
+
+    /**
+     *Fonction d'affichage choix SSL
+     **/
     private void SSLshowDialog()
     {
         final ArrayList seletedItems=new ArrayList();
         String checkboxText= getResources().getString(R.string.ssl_check);
         final CharSequence[] items = {checkboxText};
+        final boolean[] checker={true};
         final AlertDialog.Builder builder =new AlertDialog.Builder(this);
         builder.setTitle(R.string.ssl_titre);
-        builder.setMultiChoiceItems(items, null,
+
+        builder.setMultiChoiceItems(items, checker,
                 new DialogInterface.OnMultiChoiceClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int indexSelected,
                                         boolean isChecked) {
                         if (isChecked) {
+
                             // If the user checked the item, add it to the selected items
                             seletedItems.add(indexSelected);
                             UseNoCertifTLS=true;
@@ -210,9 +275,11 @@ public class MainActivity extends FragmentActivity                      {
         });
         builder.show();
     }
-    /*
+
+    /**
      *Initialisation des fragments
      **/
+
     public void setupFragments() {
         final FragmentManager fm = getSupportFragmentManager();
 
@@ -261,6 +328,10 @@ public class MainActivity extends FragmentActivity                      {
 
     }
 
+    /**
+     *Gestion du bouton de retour
+     **/
+
     @Override
     public void onBackPressed() {
 
@@ -285,7 +356,7 @@ public class MainActivity extends FragmentActivity                      {
     }
 
    /**
-    *
+    *Gestion des actions de la barre de menu
     **/
 
     @Override
@@ -296,7 +367,6 @@ public class MainActivity extends FragmentActivity                      {
                 //rentrer un nouveau mot de passe
                 showDialog();
                 return true;
-
             case R.id.clear_action:
                 //Quitter le programme
                 this.finish();
@@ -306,11 +376,16 @@ public class MainActivity extends FragmentActivity                      {
                 showFragment(mbureauFragment,null);
                 return true;
             case R.id.ssl:
+                //Affichage sélection SSL
                 SSLshowDialog();
                 return true;
         }
         return false;
     }
+
+    /**
+     *Lecture du fichier des utilisateurs
+     **/
 
     public JSONObject Read_log(Context context)
     {
@@ -328,7 +403,6 @@ public class MainActivity extends FragmentActivity                      {
             isr.read(inputBuffer);
             data = new String(inputBuffer);
             json=new JSONObject(data);
-
         }
         catch (Exception e) {
             Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
@@ -336,8 +410,11 @@ public class MainActivity extends FragmentActivity                      {
         return json;
     }
 
+    /**
+     *Lancement des requetes Asynchrones
+     **/
 
-    private class ConnectTaskHttps extends AsyncTask<String, Void, String> {
+    private class ConnectTaskHttp extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... urls) {
@@ -346,7 +423,6 @@ public class MainActivity extends FragmentActivity                      {
 
                     return https_test(urls[0]);
 
-                    // return loadFromNetwork(urls[0]);
                 } catch (IOException e) {
                     Log.i(TAG, "Erreur connection: " + e);
                     return getString(R.string.connection_error);
@@ -358,7 +434,6 @@ public class MainActivity extends FragmentActivity                      {
 
                     return http_test(urls[0]);
 
-                    // return loadFromNetwork(urls[0]);
                 } catch (IOException e) {
                     Log.i(TAG, "Erreur connection: " + e);
                     return getString(R.string.connection_error);
@@ -366,10 +441,6 @@ public class MainActivity extends FragmentActivity                      {
             }
         }
 
-        /**
-         * Uses the logging framework to display the output of the fetch
-         * operation in the log fragment.
-         */
         @Override
         protected void onPostExecute(String result) {
            // Log.i(TAG, result);
@@ -385,6 +456,10 @@ public class MainActivity extends FragmentActivity                      {
 
         }
     }
+
+    /**
+     *Requete http
+     **/
 
     private String http_test (String urlString) throws  IOException {
 
@@ -440,6 +515,10 @@ public class MainActivity extends FragmentActivity                      {
         return token;
     }
 
+    /**
+     *Requete https
+     **/
+
     private String https_test (String urlString) throws  IOException {
 
 
@@ -490,7 +569,7 @@ public class MainActivity extends FragmentActivity                      {
 
        if(responseCode == conn.HTTP_OK) {
           final String COOKIES_HEADER = "Set-Cookie";
-          cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+          cookie = conn.getHeaderField(COOKIES_HEADER);
        }
 
        if (conn.getInputStream()!=null)
@@ -517,7 +596,6 @@ public class MainActivity extends FragmentActivity                      {
             result.append("=");
             result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
         }
-
         return result.toString();
     }
 
@@ -587,15 +665,15 @@ public class MainActivity extends FragmentActivity                      {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
-//détection d'un appareil usb qui se connecte
+                    //détection d'un appareil usb qui se connecte
             if (ACTION_USB_PERMISSION.equals(action)) {
                 synchronized (this) {
                     UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if (device != null) {
-                            //call method to set up device communication
-//affichage bouton vert de présence douchette
+
+                    //affichage bouton vert de présence douchette
                         }
                     } else {
                         Log.d(TAG, "permission denied for device " + device);
@@ -606,38 +684,9 @@ public class MainActivity extends FragmentActivity                      {
                     UsbDevice deviceout = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                     if (deviceout != null) {
 
-                        //affichage bouton rouge indiquant qu'il n'y a pas de douchette
-                        // call your method that cleans up and closes communication with the device
-
                     }
                 }
             }
         }}
-
         ;
-
-    /**
-     * Create a chain of targets that will receive log data
-     */
-    public void initializeLogging() {
-
-        // Using Log, front-end to the logging chain, emulates
-        // android.util.log method signatures.
-
-        // Wraps Android's native log framework
-        LogWrapper logWrapper = new LogWrapper();
-       // Log.setLogNode(logWrapper);
-
-        // A filter that strips out everything except the message text.
-        MessageOnlyLogFilter msgFilter = new MessageOnlyLogFilter();
-        logWrapper.setNext(msgFilter);
-
-        // On screen logging via a fragment with a TextView.
-        mLogFragment =
-                (LogFragment) getSupportFragmentManager().findFragmentById(R.id.log_fragment);
-        msgFilter.setNext(mLogFragment.getLogView());
-    }
-
-
-
 }

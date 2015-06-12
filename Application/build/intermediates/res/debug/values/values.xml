@@ -27,6 +27,8 @@
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/strings.xml -->
     <eat-comment/>
     <string name="Annuler">Annuler</string>
+    <string name="Continuer">Continuer</string>
+    <string name="Quitter">Quitter</string>
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/base-strings.xml -->
     <eat-comment/>
     <string name="app_name">e-venement</string>
@@ -34,10 +36,12 @@
     <eat-comment/>
     <string name="checkpoint_hint">Selection un point de controle</string>
     <string name="clear_text">Quitter</string>
-    <string name="connection_error">Connection error.</string>
+    <string name="connection_error">Erreur de connection.</string>
+    <string name="connection_error_txt">Pas de connection reseau active</string>
     <string name="e_control_text">e-control</string>
     <string name="eve_android_text">eve-android</string>
     <string name="fetch_text">Envoyer</string>
+    <string name="id_error">Erreur Identifiant</string>
     <string name="info_titre">Information</string>
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/base-strings.xml -->
     <eat-comment/>
@@ -53,15 +57,19 @@
     </string>
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/strings.xml -->
     <eat-comment/>
-    <string name="login_text">Login</string>
+    <string name="log_error">Erreur de login</string>
+    <string name="login_text">Identifiant</string>
     <string name="menu_titre">Menu</string>
     <string name="no_checkpoint">Absence de manifestation</string>
     <string name="ok">Ok</string>
+    <string name="pass_error">Erreur de mot de passe</string>
+    <string name="pass_text">Mot de passe</string>
     <string name="sav_log">Se souvenir de moi</string>
-    <string name="ssl_check">permettre les connexions TLS non certifiées</string>
+    <string name="ssl_check">permettre les connexions TLS non certifiees</string>
     <string name="ssl_text">SSL</string>
     <string name="ssl_titre">Certificats SSL</string>
-    <string name="url_hint">URL: http[s]://dev3.libre-informatique.fr/</string>
+    <string name="url_error">Url inconnue</string>
+    <string name="url_hint">URL: http[s]://e-venement.net/</string>
     <string name="welcome_message">Bonjour, clic sur envoyer pour lancer une requete Http</string>
     <!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/values/template-styles.xml -->
     <eat-comment/>

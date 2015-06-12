@@ -3,13 +3,15 @@ package com.example.android.networkconnect;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,10 +22,12 @@ import android.widget.Toast;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,10 +35,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
@@ -42,6 +48,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -53,115 +61,124 @@ import javax.net.ssl.X509TrustManager;
  */
 public class LoginDialog extends DialogFragment {
 
-    private PreferenceManager mPreference;
-    private JSONObject jsonLog;
+
+    private JSONObject jsonLog=null;
     private User user;
     private static final String TAG = "EDroide";
     public String cookie;
     private ProgressBar progressBar;
     private int mProgressStatus = 0;
+    public static final String LOG_ERREURS="log_erreur";
+
+    private EditText login;
+    private EditText hote;
+    private EditText pass;
+    private CheckBox checkBox_save;
+    private String tls="";
+
+    String log="";
+    String pas="";
+    String hot="";
+
+    private String errors_log="Le mot de passe ou l'identifiant est invalide.";
+    private boolean Log_ok=false;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        //return super.onCreateDialog(savedInstanceState);
+
+        //vérification des variables d'entrées
+        processArguments();
+
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         // Get the layout inflater
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
         final View alertDialogView = inflater.inflate(R.layout.login_dialog, null);
-        final EditText login = (EditText) alertDialogView.findViewById(R.id.username);
-        final EditText hote = (EditText) alertDialogView.findViewById(R.id.hote);
-        final EditText pass =(EditText) alertDialogView.findViewById(R.id.password);
-        final CheckBox checkBox_save = (CheckBox) alertDialogView.findViewById(R.id.save_log);
-        progressBar=(ProgressBar) alertDialogView.findViewById(R.id.progressbar);
+        login = (EditText) alertDialogView.findViewById(R.id.username);
+        hote = (EditText) alertDialogView.findViewById(R.id.hote);
+        pass = (EditText) alertDialogView.findViewById(R.id.password);
+        checkBox_save = (CheckBox) alertDialogView.findViewById(R.id.save_log);
 
         builder.setView(alertDialogView);
-        user=new User();
+        user = new User();
 
-        //
         if (Read_log(getActivity()) != null) {
 
-
             try {
-                JSONObject js=Read_log(getActivity());
+                JSONObject js = Read_log(getActivity());
 
-                login.setText(js.getString("login"),null);
-                pass.setText(js.getString("pass"),null);
+                login.setText(js.getString("login"), null);
+                pass.setText(js.getString("pass"), null);
                 hote.setText(js.getString("hote"), null);
-                user.setUser(js.getString("login"),js.getString("pass"),js.getString("hote"));
+                tls = js.getString("tls");
+                user.setUser(js.getString("login"), js.getString("pass"), js.getString("hote"));
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-
         builder.setTitle("Login");
-
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
-        AlertDialog.Builder builder1 = builder.setView(alertDialogView)
+        builder.setView(alertDialogView)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                            public void onClick(DialogInterface dialog, int id) {
 
-                        try {
-                            //récuperer le login + trim + minuscule
-                            String log = login.getText().toString();
-                            log = log.trim();
-                            log = log.toLowerCase();
-
-
-                            //récuperer le pass + trim + minuscule
-                            String pas = pass.getText().toString();
-                            pas = pas.trim();
-                            pas = pas.toLowerCase();
-
-                            //récuperer l'hote + trim + minuscule
-                            String hot = hote.getText().toString();
-                            hot = hot.trim();
-                            hot = hot.toLowerCase();
-
-                            hot="https://dev3.libre-informatique.fr/";
-                            JSONObject JSONLogin = new JSONObject();
-
-                            user.setUser(log, pas, hot);
-                            user.savToJsonFile();
+                                try {
+                                    //récuperer le login + trim + minuscule
+                                    log = login.getText().toString();
+                                    log = log.trim();
+                                    log = log.toLowerCase();
 
 
-                                LoginAsyncTask loginAsyncTask = (LoginAsyncTask) new LoginAsyncTask();
-                                //loginAsyncTask.execute("https://"+hot+".libre-informatique.fr/");
-                            loginAsyncTask.execute(hot);
+                                    //récuperer le pass + trim + minuscule
+                                    pas = pass.getText().toString();
+                                    pas = pas.trim();
+                                    pas = pas.toLowerCase();
 
+                                    //récuperer l'hote + trim + minuscule
+                                    hot = hote.getText().toString();
+                                    hot = hot.trim();
+                                    hot = hot.toLowerCase();
 
-                            if (checkBox_save.isChecked()) {
-                                jsonLog = new JSONObject();
-                                jsonLog.put("login", log).toString();
-                                jsonLog.put("pass", pas).toString();
-                                jsonLog.put("hote", hot).toString();
-                                Save_log(getActivity(), jsonLog);
-                                //signin[remember]
+                                    //hot="https://dev3.libre-informatique.fr/";
+
+                                    user.setUser(log, pas, hot);
+                                    user.savToJsonFile();
+                                    jsonLog = new JSONObject();
+
+                                    LoginAsyncTask loginAsyncTask = (LoginAsyncTask) new LoginAsyncTask();
+
+                                    loginAsyncTask.execute(hot);
+
+                                  //  jsonLog.put("hote", hot).toString();
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                )
+                            .
+
+                    setNegativeButton(R.string.Annuler, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // User cancelled the dialog
+                                }
                             }
 
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            Toast.makeText(getActivity(), "Erreur save login: " + e, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                })
-                .setNegativeButton(R.string.Annuler, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
-                    }
-                });
-        // Create the AlertDialog object and return it
-        return builder.create();
-    }
+                    );
+                    // Create the AlertDialog object and return it
+                    return builder.create();
+                }
 
-    /**
-     * Implementation of AsyncTask, to fetch the login data in the background away from
-     * the UI thread.
-     */
-    private class LoginAsyncTask extends AsyncTask<String, Void, String> {
+                        /**
+                         * Implementation of AsyncTask, to fetch the login data in the background away from
+                         * the UI thread.
+                         */
+        private class LoginAsyncTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected void onPreExecute() {
@@ -202,20 +219,56 @@ public class LoginDialog extends DialogFragment {
          * Uses the logging framework to display the output of the fetch
          * operation in the log fragment.
          */
+
         @Override
         protected void onPostExecute(String result) {
-           // Log.i(TAG, result);
-            //affichage du resultat dans un toast
-            Log.i(TAG , "Postexe: "+result);
 
-            if (result.contains("unknownHostException"))
+            if (result.contains("Le mot de passe ou l'identifiant est invalide."))
             {
 
+            Log.i(TAG, "Erreur : "+result);
+            Log_ok=false;
+
+                    Log.i(TAG, "Login faux");
+                    try {
+                        jsonLog.put("log_verif","faux");
+                      //  Save_log(getActivity(), jsonLog);
+                    } catch (Exception e) {
+                        Log.i(TAG, "Erreur sauvegarde: "+e);
+                        e.printStackTrace();
+                    }
+
+            //Toast.makeText(getActivity(), "Erreur login",Toast.LENGTH_SHORT).show();
+            //this.onCancelled(result);
+            //LoginDialog newlog = new LoginDialog();
+            //newlog.show(getActivity().getSupportFragmentManager(),"LoginDialog2");
+
+            }
+            else
+            {
+                if (checkBox_save.isChecked()) {
+
+                    try {
+                        jsonLog.put("login", log).toString();
+                        jsonLog.put("pass", pas).toString();
+                        jsonLog.put("tls", "no_certif");
+                    } catch (JSONException e) {
+                        Log.i(TAG,"Erreur json: "+e);
+                    }
+                }
+
+                Log.i(TAG, "Pas erreur?: "+result);
+            }
+
+            try {
+                jsonLog.put("hote",hot).toString();
+                Log.i(TAG,"json: "+jsonLog.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
 
         }
     }
-
    /**
     *Vérification de l'utilisateur, protocol http
     **/
@@ -225,12 +278,8 @@ public class LoginDialog extends DialogFragment {
         String token="";
         URL url = new URL(urlString);
 
-        Log.i(TAG, "Protocol: "+url.getProtocol().toString());
-
-        //if (url.getProtocol().toLowerCase().equals("https")) {
+        Log.i(TAG, "Protocol http: "+url.getProtocol().toString());
         SSLHosts();
-        //trustAllHosts();
-
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) url.openConnection();
@@ -257,8 +306,6 @@ public class LoginDialog extends DialogFragment {
             BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
             writer2.write(getQuery(nameValuePairs));
             writer2.flush();
-            //writer2.close();
-            //os.close();
 
             conn.connect();
 
@@ -273,22 +320,41 @@ public class LoginDialog extends DialogFragment {
 
             if(responseCode == conn.HTTP_OK) {
                 final String COOKIES_HEADER = "Set-Cookie";
-                cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+                cookie = conn.getHeaderField(COOKIES_HEADER);
             }
 
             if (conn.getInputStream()!=null)
             {
 
-                //while ((count = conn.getInputStream().read()) != -1) {
-                //  mProgressStatus += count;
-                //    progressBar.setProgress(mProgressStatus);
-                //mProgressStatus(""+(int)((total*100)/conn.getInputStream().available()));
+              token=conn.getHeaderField(1);
 
-                //}
-
-                Log.i(TAG,readIt(conn.getInputStream(),15000));
-                token=conn.getHeaderField(1);
                 Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
+                try
+                {
+                    String erreur="";
+                    Pattern pattern=null;
+                    pattern = Pattern.compile("Le mot de passe ou l'identifiant est invalide.");
+                    Matcher m=null;
+                    m = pattern.matcher(readIt(conn.getInputStream(),2500));
+
+                    while(m.find()) {
+                        Log.i(TAG, m.group());
+                        erreur=erreur+m.group();
+                    }
+
+                    if (erreur!="")
+                    {
+                        token=erreur;
+                    }
+
+                    Log.i(TAG, "Erreur connection: "+erreur);
+
+
+                }
+                catch (Exception e)
+                {
+                    Log.i(TAG,"Erreur de selection"+e);
+                }
             }
 
         }
@@ -313,17 +379,16 @@ public class LoginDialog extends DialogFragment {
         String token="";
         URL url = new URL(urlString);
 
-        Log.i(TAG, "Protocol: "+url.getProtocol().toString());
+        Log.i(TAG, "Protocol https: "+url.getProtocol().toString());
 
         SSLHosts();
 
         HttpsURLConnection conn = null;
         try {
-            conn = (HttpsURLConnection) url.openConnection();
-
+        conn = (HttpsURLConnection) url.openConnection();
 
         conn.setReadTimeout(2000 /* milliseconds */);
-        conn.setConnectTimeout(2500 /* milliseconds */);
+        conn.setConnectTimeout(2000 /* milliseconds */);
         // conn.setRequestMethod("GET");
         conn.setDoInput(true);
         conn.setDoOutput(true);
@@ -359,15 +424,37 @@ public class LoginDialog extends DialogFragment {
 
         if(responseCode == conn.HTTP_OK) {
             final String COOKIES_HEADER = "Set-Cookie";
-            cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
+            cookie = conn.getHeaderField(COOKIES_HEADER);
         }
 
         if (conn.getInputStream()!=null)
         {
-
-            Log.i(TAG,readIt(conn.getInputStream(),15000));
             token=conn.getHeaderField(1);
-            Log.i(TAG,getStringFromInputStream(conn.getInputStream()));
+
+            try
+            {
+
+                String erreur="";
+                //Pattern pattern = Pattern.compile(!<input\s+.*id="signin_username".*\sname="signin[username]"\s.*/>!);
+                Pattern pattern = Pattern.compile("Le mot de passe ou l'identifiant est invalide.");
+                Matcher m = pattern.matcher(getStringFromInputStream(conn.getInputStream()));
+
+                while(m.find()) {
+                    Log.i(TAG, m.group());
+                   erreur=erreur+m.group();
+                }
+                if (erreur!="")
+                {
+
+                    token=erreur;
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                Log.i(TAG,"Erreur de selection"+e);
+            }
         }
 
         }
@@ -382,6 +469,8 @@ public class LoginDialog extends DialogFragment {
         }
         return token;
     }
+
+
 
     private String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException
     {
@@ -488,6 +577,13 @@ public class LoginDialog extends DialogFragment {
         return json;
     }
 
+    public String getErrors_log() {
+        return errors_log;
+    }
+
+    public void setErrors_log(String errors_log) {
+        this.errors_log = errors_log;
+    }
     private static void SSLHosts() {
 
         X509TrustManager easyTrustManager=new X509TrustManager() {
@@ -515,7 +611,6 @@ public class LoginDialog extends DialogFragment {
             SSLContext sc = SSLContext.getInstance("TLS");
 
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            //Log.i(TAG,"TrustManager: "+sc.getProtocol());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
         } catch (Exception e) {
@@ -573,5 +668,70 @@ public class LoginDialog extends DialogFragment {
         return writer.toString();
     }
 
+    public void processArguments() {
+        // For most objects we'd handle the multiple possibilities for initialization variables
+        // as multiple constructors.  For Fragments, however, it's customary to use
+        // setArguments / getArguments.
+
+        if (getArguments() != null) {
+            Bundle args = getArguments();
+            if (args.containsKey(LOG_ERREURS))
+            {
+                try {
+                    login.setText(R.string.log_error);
+
+                    JSONArray Js=null;
+
+                    String data=args.getString(LOG_ERREURS);
+
+                    JSONObject checkpoints=new JSONObject(data);
+
+                    JSONArray tab_checkpoints=new JSONArray();
+                    tab_checkpoints= checkpoints.names();
+
+                    String tab[]=null;
+                    int var=0;
+                    Log.i(TAG, "Longueur tab: "+tab_checkpoints.length());
+                    if(tab_checkpoints.length()>1) {
+
+                        var = 1;
+
+                        for(int i=0;i<tab_checkpoints.length();i++)
+                        {
+
+                            String entree=tab_checkpoints.get(i).toString()+" "+checkpoints.get(tab_checkpoints.get(i).toString());
+
+                        }
+
+                    }
+
+                    if(tab_checkpoints.length()<=1)
+                    {
+                        //spinner_checkpoint.setVisibility(View.GONE);
+  //                      listcheckpoint = new String[tab_checkpoints.length()];
+    //                    num_checkpoint=tab_checkpoints.get(0).toString();
+      //                  Log.i(TAG, "Checkpoint: "+num_checkpoint);
+
+                    }
+
+
+
+                } catch (Exception e) {
+                    Log.i(TAG,"Erreur Tableau JSON: "+e.toString());
+                    e.printStackTrace();
+                }
+            }
+           else {
+
+            }
+        }
+    }
+    public JSONObject getJsonLog() {
+        return jsonLog;
+    }
+
+    public void setJsonLog(JSONObject jsonLog) {
+        this.jsonLog = jsonLog;
+    }
 
 }

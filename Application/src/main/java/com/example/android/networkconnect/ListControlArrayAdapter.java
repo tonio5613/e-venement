@@ -19,8 +19,10 @@ import java.util.Collections;
 
 /**
  * Created by adonniou on 27/05/15.
- * class
+ * class de gestion de l'affichage de la liste des contrôles
+ * Choix des couleurs, logos et type de police de caractères
  */
+
 public class ListControlArrayAdapter extends ArrayAdapter<String> {
     private final Context context;
     private final ArrayList<ControlTic> ListControl;
@@ -53,7 +55,7 @@ public class ListControlArrayAdapter extends ArrayAdapter<String> {
         //TextView controltic_message = (TextView) rowView.findViewById(R.id.controltic_message);
         TextView controltic_erreur = (TextView) rowView.findViewById(R.id.controltic_erreurs);
         TextView controltic_ticket = (TextView) rowView.findViewById(R.id.controltic_ticket);
-        TextView controltic_gauge = (TextView) rowView.findViewById(R.id.controltic_gauge);
+        TextView controltic_jauge = (TextView) rowView.findViewById(R.id.controltic_jauge);
         TextView controltic_manifestation = (TextView) rowView.findViewById(R.id.controltic_manifestation);
         ImageView controltic_image = (ImageView) rowView.findViewById(R.id.controltic_picture);
         RelativeLayout relativeLayout=(RelativeLayout) rowView.findViewById(R.id.controltic_group);
@@ -61,7 +63,7 @@ public class ListControlArrayAdapter extends ArrayAdapter<String> {
         controltic_timestamp.setTypeface(null, Typeface.BOLD);
         controltic_erreur.setTypeface(null, Typeface.BOLD);
         controltic_ticket.setTypeface(null, Typeface.BOLD);
-        controltic_gauge.setTypeface(null, Typeface.BOLD);
+        controltic_jauge.setTypeface(null, Typeface.BOLD);
         controltic_manifestation.setTypeface(null, Typeface.BOLD);
 
         if(ListControl.get(position).getDETAILS_CONTROL_ERRORS()!="")
@@ -81,7 +83,7 @@ public class ListControlArrayAdapter extends ArrayAdapter<String> {
             controltic_erreur.setText(ListControl.get(position).getDETAILS_CONTROL_ERRORS());
             String infotic = ListControl.get(position).getTICKETS_VALUE_TXT() + " " + ListControl.get(position).getTICKETS_PRICE() + " Billet: #" + ListControl.get(position).getTICKETS_ID() + " (" + ListControl.get(position).getTICKETS_USERS() + ")";
             controltic_ticket.setText(infotic);
-            controltic_gauge.setText(ListControl.get(position).getTICKETS_GAUGE());
+            controltic_jauge.setText(ListControl.get(position).getTICKETS_JAUGE());
             controltic_manifestation.setText(ListControl.get(position).getTICKETS_MANIFESTATION());
 
         return rowView;

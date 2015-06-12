@@ -17,10 +17,12 @@
 package com.example.android.networkconnect;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -35,11 +37,13 @@ import android.widget.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -59,18 +63,17 @@ public class BureauFragment extends Fragment {
     // Keys which will be used to store/retrieve text passed in via setArguments.
     public static final String TEXT_KEY = "text";
     public static final String TEXT_ID_KEY = "text_id";
+    public static final String ERRORS_LOG = "errors_log";
 
     public static final Drawable DRAWABLE_KEY=null;
     public static final Drawable DRAWABLE_ID_KEY=null;
-    private Layout ll;
-    private FragmentActivity fa;
     public ControlFragment mControlFragment;
     View layout;
-    // For situations where the app wants to modify text at Runtime, exposing the TextView.
-    private TextView mTextView;
     private static final String TAG = "EDroide";
-
-    public String apidev8="https://dev3.libre-informatique.fr/tck.php/ticket/checkpointAjax";
+    private JSONObject jsonLog;
+    private String log_verif="";
+    public String URL="";
+    private String tls="";
 
     private static String JSON_CHECKPOINT="json_checkpoint";
 
@@ -84,7 +87,6 @@ public class BureauFragment extends Fragment {
         // Before initializing the textView, check if any arguments were provided via setArguments.
 
         processArguments();
-fa=super.getActivity();
 
         layout = inflater.inflate(R.layout.bureaulayout, container, false);
 
@@ -94,20 +96,87 @@ fa=super.getActivity();
             @Override
             public void onClick(View v) {
                 try {
-                    new CheckpointTaskHttps().execute(apidev8);
+                    URL=url();
+                    if(URL!="") {
+                        new CheckpointTaskHttps().execute(URL);
+                    }
+                    else
+                    {
+                        //LoginDialog mLogin = new LoginDialog();
+                        //mLogin.show(getActivity().getSupportFragmentManager(), "LoginDialog");
+
+                    }
                 } catch (Exception e) {
+                    Show_Connection_error_Dialog();
                     Log.i(TAG, "Erreur CheckpointTaskHttps: "+e);
                 }
             }
         });
 
         if (mText != null) {
-            mTextView.setText(mText);
+
             Log.i("SimpleTextFragment", mText);
         }
         return layout;
     }
 
+    private String url ()
+    {
+        String url="";
+
+        try {
+
+            JSONObject object = Read_log(getActivity());
+
+            Log.i(TAG, "Json: "+object.toString());
+
+            if(object.getString("log_verif")!="")
+            {
+
+                Log.i(TAG,"Log verif: "+log_verif);
+
+                // https://dev3.libre-informatique.fr/tck.php/ticket/checkpointAjax
+
+                url=object.getString("hote");
+                url=url+"/tck.php/ticket/checkpointAjax";
+                tls=object.getString("tls");
+
+            }
+            else
+            {
+                url="faux";
+            }
+
+
+        } catch (Exception e) {
+            Log.i(TAG, "Erreur lecture: "+e);
+        }
+        return url;
+    }
+
+    public void Show_Connection_error_Dialog()
+    {
+        final ArrayList seletedItems=new ArrayList();
+        String messageText= getResources().getString(R.string.connection_error_txt);
+        //final CharSequence[] items = {checkboxText};
+        final boolean[] checker={true};
+        final AlertDialog.Builder builder =new AlertDialog.Builder(getActivity());
+        builder.setTitle(R.string.connection_error);
+        builder.setMessage(messageText);
+        builder.setNeutralButton(R.string.Continuer,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.setNegativeButton(R.string.Quitter,new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                getActivity().finish();
+            }
+        });
+        builder.show();
+    }
 
     private class CheckpointTaskHttps extends AsyncTask<String, Void, String> {
 
@@ -145,8 +214,6 @@ fa=super.getActivity();
                 } catch (Exception e) {
                     Log.i(TAG, "Erreur Put arg : " + e);
                 }
-
-
                 final FragmentManager fm = getActivity().getSupportFragmentManager();
                 final FragmentTransaction ft = fm.beginTransaction();
                 mControlFragment = (ControlFragment) new ControlFragment();
@@ -223,31 +290,39 @@ fa=super.getActivity();
         return writer.toString();
     }
 
-    public TextView getTextView() {
-        return mTextView;
+    public JSONObject Read_log(Context context)
+    {
+        FileInputStream fIn = null;
+        InputStreamReader isr = null;
+
+        char[] inputBuffer = new char[255];
+        String data = null;
+
+        JSONObject json=null;
+
+        try{
+            fIn = context.openFileInput("settings.txt");
+            isr = new InputStreamReader(fIn);
+            isr.read(inputBuffer);
+            data = new String(inputBuffer);
+            json=new JSONObject(data);
+            Log.i(TAG, "JSON: "+json.toString());
+        }
+        catch (Exception e) {
+            //Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
+        }
+        return json;
     }
 
-    /**
-     * Changes the text for this TextView, according to the resource ID provided.
-     * @param stringId A resource ID representing the text content for this Fragment's TextView.
-     */
-    public void setText(int stringId) {
-        getTextView().setText(getActivity().getString(stringId));
-    }
-
-    /**
-     * Processes the arguments passed into this Fragment via setArguments method.
-     * Currently the method only looks for text or a textID, nothing else.
-     */
     public void processArguments() {
-        // For most objects we'd handle the multiple possibilities for initialization variables
-        // as multiple constructors.  For Fragments, however, it's customary to use
-        // setArguments / getArguments.
+
         if (getArguments() != null) {
             Bundle args = getArguments();
-            if (args.containsKey(TEXT_KEY)) {
-                mText = args.getString(TEXT_KEY);
-                Log.d("Constructor", "Added Text.");
+            if (args.containsKey(ERRORS_LOG)) {
+                String errors = args.getString(ERRORS_LOG);
+                DialogFragment mLoginDialog = new LoginDialog();
+                mLoginDialog.show(getActivity().getSupportFragmentManager(), "LoginDialog");
+
             } else if (args.containsKey(TEXT_ID_KEY)) {
                 mTextId = args.getInt(TEXT_ID_KEY);
                 mText = getString(mTextId);

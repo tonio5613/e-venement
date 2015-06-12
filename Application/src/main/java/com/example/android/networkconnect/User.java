@@ -20,72 +20,10 @@ public class User {
     private String LOGIN;
     private String PASS;
     private String HOTE;
+    private String TLS;
     private JSONObject JSONLOG_SAV;
 
   public String TAG="EDroide_log-erreur";
-
-    private JSONObject Read_log(Context context)
-    {
-        FileInputStream fIn = null;
-        InputStreamReader isr = null;
-
-        char[] inputBuffer = new char[255];
-        String data = null;
-
-        JSONObject json=null;
-
-        try{
-            fIn = context.openFileInput("settings.txt");
-            isr = new InputStreamReader(fIn);
-            isr.read(inputBuffer);
-            data = new String(inputBuffer);
-            //affiche le contenu de mon fichier dans un popup surgissant
-          //  Toast.makeText(context, "data: "+data,Toast.LENGTH_SHORT).show();
-            json=new JSONObject(data);
-        }
-        catch (Exception e) {
-           // Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
-        }
-            /*finally {
-               try {
-                      isr.close();
-                      fIn.close();
-                      } catch (IOException e) {
-                        Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
-                      }
-            } */
-        return json;
-    }
-
-    private void Save_log (Context context,JSONObject sav_log)
-    {
-        FileOutputStream fOut = null;
-        OutputStreamWriter osw = null;
-
-        if(Read_log(context)!=null)
-        {
-          //  Toast.makeText(context, "Compte existant: ",Toast.LENGTH_SHORT).show();
-
-        }
-        else {
-            try {
-                fOut = context.openFileOutput("settings.txt", Context.MODE_APPEND);
-                osw = new OutputStreamWriter(fOut);
-
-                osw.write(sav_log.toString());
-                osw.flush();
-
-            } catch (Exception e) {
-            } finally {
-                try {
-                    osw.close();
-                    fOut.close();
-                } catch (IOException e) {
-
-                }
-            }
-        }
-    }
 
     public  void savToJsonFile()
     {
@@ -94,11 +32,10 @@ public class User {
             JSONLOG_SAV.put("login",LOGIN);
             JSONLOG_SAV.put("pass", PASS);
             JSONLOG_SAV.put("hote", HOTE);
+            JSONLOG_SAV.put("tls", TLS);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-        //Save_log(, JSONLOG_SAV);
     }
 
     public void setUser(String mLOGIN,String mPASS, String mHOTE)
