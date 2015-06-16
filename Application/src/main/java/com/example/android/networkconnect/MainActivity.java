@@ -31,6 +31,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -106,11 +107,12 @@ public class MainActivity extends FragmentActivity                      {
 
     private static final String TAG = "EDroide";
 
-    public String cookie;
-
     public User user=new User();
+    public JSONObject UserJson=null;
 
-    LoginDialog mLoginDialog;
+    public LoginDialog mLoginDialog;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,52 +123,49 @@ public class MainActivity extends FragmentActivity                      {
             CookieHandler.setDefault(new CookieManager());
 
             this.setContentView(R.layout.mainlayout);
-            //initialisation des écrans
-            setupFragments();
-            //Affichage de l'écran du bureau principal
-            showFragment(mbureauFragment, null);
+
+
+            //Initialisation de LoginDialog
+
+            mLoginDialog = new LoginDialog();
 
             //Vérification si connection internet active
 
         if (isConnected() != true) {
-            //Affichage d'une erreur de connection
+            //Affichage erreur de connection
             Show_Connection_error_Dialog(null);
         } else {
-
-            //Lecture des informations
+            //Lecture des informations en local
             if (Read_log(this) == null) {
                 //Affichage de la fenêtre d'identification
-
-                mLoginDialog = new LoginDialog();
                 mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
-
-                //while (mLoginDialog.isMenuVisible()) {
-                    //try {
-                //        Log.i(TAG, "Retour Json: " + mLoginDialog.getJsonLog().toString());
-                  //  } catch (Exception e) {
-                    //    Log.i(TAG, "erreur de retour! " + e);
-                    //}
-               // }
             }
+
             //Utilisation du fichier utilisateur
              else {
-                JSONObject UserJson = Read_log(this);
 
-                try {
-                    user.setUser(UserJson.getString("login"), UserJson.getString("pass"), UserJson.getString("hote"));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                try {
+                UserJson = Read_log(this);
 
-                    new ConnectTaskHttp().execute(UserJson.getString("hote"));
-                } catch (Exception e) {
-                    //Affichage dans le Logcat
-                    Log.i(TAG, "Erreur de connection: " + e);
-                    e.printStackTrace();
-                }
+                Bundle arg = new Bundle();
+                arg.putString("USER", UserJson.toString());
+
+                BureauFragment bureauFragment = new BureauFragment();
+                bureauFragment.setArguments(arg);
+
+                FragmentManager fm = this.getSupportFragmentManager();
+
+                FragmentTransaction ft = fm.beginTransaction();
+
+                ft.setCustomAnimations(android.R.anim.slide_in_left,
+                        android.R.anim.slide_out_right);
+
+                ft.replace(R.id.intro_fragment, bureauFragment);
+
+                ft.addToBackStack(null);
+                //affichage du fragment Bureau
+                ft.commit();
+
             }
-
         }
     }
 
@@ -191,15 +190,6 @@ public class MainActivity extends FragmentActivity                      {
 
 
     /**
-    *Affichage de la boite de dialogue d'identification de l'utilisateur
-    **/
-
-    private void showDialog()
-    {
-            mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
-    }
-
-    /**
      *Fonction d'affichage d'erreurs
      **/
     public void Show_Connection_error_Dialog(String erreur)
@@ -211,7 +201,6 @@ public class MainActivity extends FragmentActivity                      {
             messageText=erreur;
         }
         final ArrayList seletedItems=new ArrayList();
-        //final CharSequence[] items = {checkboxText};
         final boolean[] checker={true};
         final AlertDialog.Builder builder =new AlertDialog.Builder(this);
         builder.setTitle(R.string.connection_error);
@@ -284,6 +273,7 @@ public class MainActivity extends FragmentActivity                      {
         final FragmentManager fm = getSupportFragmentManager();
 
         this.mbureauFragment = (BureauFragment) new BureauFragment();
+
         if (this.mbureauFragment == null) {
             this.mbureauFragment = new BureauFragment();
         }
@@ -336,9 +326,11 @@ public class MainActivity extends FragmentActivity                      {
     public void onBackPressed() {
 
         FragmentManager manager = getSupportFragmentManager();
+
         if (manager.getBackStackEntryCount() > 1) {
             showFragment(mbureauFragment, null);
         } else {
+            this.finish();
             super.onBackPressed();
         }
     }
@@ -365,7 +357,7 @@ public class MainActivity extends FragmentActivity                      {
 
             case R.id.newlog:
                 //rentrer un nouveau mot de passe
-                showDialog();
+                mLoginDialog.show(getSupportFragmentManager(), "LoginDialog");
                 return true;
             case R.id.clear_action:
                 //Quitter le programme
@@ -405,255 +397,10 @@ public class MainActivity extends FragmentActivity                      {
             json=new JSONObject(data);
         }
         catch (Exception e) {
+            Log.i(TAG, "Error setting: "+e);
             Toast.makeText(context, "Settings not read",Toast.LENGTH_SHORT).show();
         }
         return json;
-    }
-
-    /**
-     *Lancement des requetes Asynchrones
-     **/
-
-    private class ConnectTaskHttp extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... urls) {
-            if (UseNoCertifTLS!=false) {
-                try {
-
-                    return https_test(urls[0]);
-
-                } catch (IOException e) {
-                    Log.i(TAG, "Erreur connection: " + e);
-                    return getString(R.string.connection_error);
-                }
-            }
-            else
-            {
-                try {
-
-                    return http_test(urls[0]);
-
-                } catch (IOException e) {
-                    Log.i(TAG, "Erreur connection: " + e);
-                    return getString(R.string.connection_error);
-                }
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-           // Log.i(TAG, result);
-            //affichage du resultat dans un toast
-
-            //try {
-          //      json= new JSONObject(result);
-            //   Log.i(TAG, "Json: "+json.length());
-            //} catch (JSONException e) {
-              //  Log.i(TAG, "Erreur Json : "+e);
-            //}
-
-
-        }
-    }
-
-    /**
-     *Requete http
-     **/
-
-    private String http_test (String urlString) throws  IOException {
-
-        String token="";
-        URL url = new URL(urlString);
-
-        trustAllHosts();
-
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setReadTimeout(20000 /* milliseconds */);
-        conn.setConnectTimeout(25000 /* milliseconds */);
-        // conn.setRequestMethod("GET");
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-
-        conn.setChunkedStreamingMode(0);
-
-        conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
-
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
-
-        //Et on y rajoute nos param�tres
-        nameValuePairs.add(new BasicNameValuePair("signin[username]", user.getLOGIN()));
-        nameValuePairs.add(new BasicNameValuePair("signin[password]", user.getPASS()));
-
-        OutputStream os = conn.getOutputStream();
-        BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-        writer2.write(getQuery(nameValuePairs));
-        writer2.flush();
-
-        conn.connect();
-
-        String headerName = null;
-
-        for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
-        {
-            Log.i (TAG,headerName+": "+conn.getHeaderField(i));
-        }
-
-        int responseCode = conn.getResponseCode();
-
-        if(responseCode == conn.HTTP_OK) {
-            final String COOKIES_HEADER = "Set-Cookie";
-            cookie = conn.getHeaderField(COOKIES_HEADER); // this is managed automagically by Android and it does not require to be setted in every request
-        }
-
-        if (conn.getInputStream()!=null)
-        {
-            Log.i(TAG,readIt(conn.getInputStream(),15000));
-            token=readIt(conn.getInputStream(),15000);
-        }
-        return token;
-    }
-
-    /**
-     *Requete https
-     **/
-
-    private String https_test (String urlString) throws  IOException {
-
-
-
-        String token="";
-        URL url = new URL(urlString);
-
-       if (url.getProtocol().toLowerCase().equals("https")) {}
-
-        if (url.getProtocol().toLowerCase().equals("http")) {}
-
-        trustAllHosts();
-
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-
-            conn.setReadTimeout(20000 /* milliseconds */);
-            conn.setConnectTimeout(25000 /* milliseconds */);
-           // conn.setRequestMethod("GET");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-
-            conn.setChunkedStreamingMode(0);
-
-            conn.setRequestProperty("User-Agent", "e-venement-app/0.1");
-
-
-       List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(); //On cr�e la liste qui contiendra tous nos param�tres
-
-       //Et on y rajoute nos param�tres
-       nameValuePairs.add(new BasicNameValuePair("signin[username]", user.getLOGIN()));
-       nameValuePairs.add(new BasicNameValuePair("signin[password]", user.getPASS()));
-
-       OutputStream os = conn.getOutputStream();
-       BufferedWriter writer2 = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-       writer2.write(getQuery(nameValuePairs));
-       writer2.flush();
-
-       conn.connect();
-
-       String headerName = null;
-
-       for (int i = 1; (headerName = conn.getHeaderFieldKey(i)) != null; i++)
-       {
-           Log.i (TAG,headerName+": "+conn.getHeaderField(i));
-       }
-
-       int responseCode = conn.getResponseCode();
-
-       if(responseCode == conn.HTTP_OK) {
-          final String COOKIES_HEADER = "Set-Cookie";
-          cookie = conn.getHeaderField(COOKIES_HEADER);
-       }
-
-       if (conn.getInputStream()!=null)
-       {
-           Log.i(TAG,readIt(conn.getInputStream(),15000));
-           token=readIt(conn.getInputStream(),15000);
-       }
-       return token;
-    }
-
-    private String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException
-    {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-
-        for (NameValuePair pair : params)
-        {
-            if (first)
-                first = false;
-            else
-                result.append("&");
-
-            result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
-        }
-        return result.toString();
-    }
-
-    /**
-     * Reads an InputStream and converts it to a String.
-     *
-     * @param stream InputStream containing HTML from targeted site.
-     * @param len    Length of string that this method returns.
-     * @return String concatenated according to len parameter.
-     * @throws java.io.IOException
-     * @throws java.io.UnsupportedEncodingException
-     */
-    private String readIt(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
-
-        Reader reader = null;
-        //stream.available();
-        reader = new InputStreamReader(stream, "UTF-8");
-        char[] buffer = new char[len];
-        reader.read(buffer);
-        return new String(buffer);
-    }
-
-    private static void trustAllHosts() {
-
-        X509TrustManager easyTrustManager = new X509TrustManager() {
-
-            public void checkClientTrusted(
-                    X509Certificate[] chain,
-                    String authType) throws CertificateException {
-                // Oh, I am easy!
-            }
-
-            public void checkServerTrusted(
-                    X509Certificate[] chain,
-                    String authType) throws CertificateException {
-                // Oh, I am easy!
-            }
-
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-
-        };
-
-        // Create a trust manager that does not validate certificate chains
-        TrustManager[] trustAllCerts = new TrustManager[]{easyTrustManager};
-
-        // Install the all-trusting trust manager
-        try {
-            SSLContext sc = SSLContext.getInstance("TLS");
-
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**

@@ -1,0 +1,6 @@
+/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/build/intermediates/classes/debug
+/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/build/intermediates/pre-dexed/debug/support-annotations-21.0.2-4573fdabc5c236d6cf11d50f6dd4452109316da3.jar
+/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/build/intermediates/pre-dexed/debug/classes-56acfd16176c81cd0be6e94ec47c67b08e3c3d97.jar
+/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/build/intermediates/pre-dexed/debug/classes-7e989a58f0e9548cafe4030613724bdfe28ca777.jar
+/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/build/intermediates/pre-dexed/debug/internal_impl-21.0.2-641d51e32273fa4d653ba1eeedc61b528cb0aacd.jar
+/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/build/intermediates/pre-dexed/debug/classes-09217a87fd25f03565ef3e016c0f4bdce455a874.jar

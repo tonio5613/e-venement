@@ -250,11 +250,11 @@ public class ControlTic {
         this.TICKETS_ID = TICKETS_ID;
     }
 
-    public String getTICKETS_GAUGE() {
+    public String getTICKETS_JAUGE() {
         return TICKETS_JAUGE;
     }
 
-    public void setTICKETS_GAUGE(String TICKETS_GAUGE) {
+    public void setTICKETS_JAUGE(String TICKETS_GAUGE) {
         this.TICKETS_JAUGE = TICKETS_GAUGE;
     }
 

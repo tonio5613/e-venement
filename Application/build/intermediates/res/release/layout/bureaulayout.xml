@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" android:layout_height="fill_parent"
+
+    >
+    <TableRow
+        android:orientation="vertical"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:padding="4dp">
+
+        <Button
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:id="@+id/lauchscan"
+            android:layout_gravity="top"
+            android:maxHeight="150dp"
+            android:maxWidth="150dp"
+            android:drawableTop="@drawable/ic_scan_launcher"
+            android:clickable="true"
+            android:enabled="true"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:text="@string/e_control_text"
+            android:singleLine="false"
+            android:minHeight="120dp"
+            android:minWidth="120dp"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            />
+
+    </TableRow>
+    <TableRow>
+
+    </TableRow>
+
+</TableLayout><!-- From: file:/home/adonniou/AndroidStudioProjects/NetworkConnect/Application/src/main/res/layout/bureaulayout.xml -->
